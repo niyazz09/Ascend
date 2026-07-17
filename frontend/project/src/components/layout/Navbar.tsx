@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Menu, X, Bell, Search, GraduationCap } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Avatar from '../ui/Avatar';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -17,12 +18,6 @@ export default function Navbar() {
   const { user } = useAuth();
 
   const name = user?.name || user?.email.split('@')[0] || 'Learner';
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-base-600">
@@ -67,10 +62,10 @@ export default function Navbar() {
           </NavLink>
           <NavLink
             to="/profile"
-            className="w-8 h-8 rounded-full bg-accent-100 flex items-center justify-center text-accent-700 font-semibold text-xs"
+            className="flex shrink-0"
             aria-label="Profile"
           >
-            {initials}
+            <Avatar name={name} size="sm" />
           </NavLink>
         </div>
       </div>

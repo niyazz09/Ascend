@@ -1,4 +1,4 @@
-const geminiService = require('../services/gemini');
+const llmService = require('../services/llm');
 const fallbackTopics = require('../data/topics.json');
 
 /**
@@ -12,6 +12,7 @@ const fallbackTopics = require('../data/topics.json');
  */
 function validateTopics(topics) {
   if (!Array.isArray(topics) || topics.length === 0) {
+    console.warn("[Schema Validation Error] 'topics' field is not an array or is empty.");
     return false;
   }
 
@@ -20,11 +21,12 @@ function validateTopics(topics) {
 
   for (const topic of topics) {
     if (!topic.id || !topic.title || !Array.isArray(topic.prerequisites)) {
+      console.warn(`[Schema Validation Error] Topic missing required field (id, title, or prerequisites array):`, topic);
       return false;
     }
-    // Verify prerequisites exist in the topics list
     for (const prereqId of topic.prerequisites) {
       if (!topicIds.has(prereqId)) {
+        console.warn(`[Schema Validation Error] Topic '${topic.id}' references non-existent prerequisite ID '${prereqId}'.`);
         return false;
       }
     }
@@ -42,7 +44,10 @@ function validateTopics(topics) {
     visiting.add(nodeId);
     const prereqs = adjList.get(nodeId) || [];
     for (const prereqId of prereqs) {
-      if (hasCycle(prereqId)) return true;
+      if (hasCycle(prereqId)) {
+        console.warn(`[Schema Validation Error] Cyclic prerequisite dependency detected involving topic '${nodeId}'.`);
+        return true;
+      }
     }
     visiting.delete(nodeId);
     visited.add(nodeId);
@@ -227,9 +232,9 @@ const analyzerResponseSchema = {
   type: "OBJECT",
   properties: {
     goal: { type: "STRING" },
-    category: { type: "STRING", enum: ["Programming", "Academic", "Languages", "Creative", "Professional Certifications"] },
+    category: { type: "STRING" },
     domain: { type: "STRING" },
-    difficulty: { type: "STRING", enum: ["Beginner", "Intermediate", "Advanced", "Expert"] },
+    difficulty: { type: "STRING" },
     estimatedDuration: { type: "STRING" },
     prerequisites: { type: "ARRAY", items: { type: "STRING" } },
     recommendedStyle: { type: "STRING" },
@@ -304,16 +309,19 @@ const analyzerResponseSchema = {
  * Analyzes a learning goal input and generates a structured topic path.
  * Retries once with a stricter prompt if validation fails.
  * 
- * @param {Object} params
- * @param {string} params.goal - Raw goal string input
+ * @param {Object|string} input
  * @returns {Promise<Object>} Analyzed goal and validated topics list
  */
-async function analyzeGoal({ goal }) {
+async function analyzeGoal(input) {
+  const goal = typeof input === 'string' ? input : (input && input.goal);
+  console.log(`[Planner Pipeline Stage 1] learningGoalAnalyzer invoked for goal: "${goal}"`);
+
   if (!goal || typeof goal !== 'string' || goal.trim() === '') {
     throw new Error("Invalid learning goal");
   }
 
-  const runFallback = () => {
+  const runFallback = (reason) => {
+    console.error(`[Planner Fallback Triggered] Exact Fallback Reason: ${reason}`);
     const customTopics = getOfflineFallbackTopics(goal);
     const meta = getOfflineFallbackMetadata(goal);
     const enrichedTopics = customTopics.map(topic => ({
@@ -339,9 +347,9 @@ async function analyzeGoal({ goal }) {
     };
   };
 
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn("GEMINI_API_KEY environment variable is missing. Running in local fallback mode.");
-    return runFallback();
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return runFallback("LLM API key (OPENROUTER_API_KEY / GEMINI_API_KEY) is missing or empty.");
   }
 
   try {
@@ -358,44 +366,57 @@ async function analyzeGoal({ goal }) {
 
     while (attempts < maxAttempts) {
       attempts++;
+      console.log(`[Planner Pipeline Stage 2] llm.generateContent() Attempt ${attempts}/${maxAttempts} started for goal: "${goal}"`);
+      let responseText;
       try {
-        const responseText = await geminiService.generateContent({
+        responseText = await llmService.generateContent({
           prompt,
           systemInstruction: "You are the ASCEND Learning Goal Analyzer. Your role is to deconstruct any learning goal into a highly structured, valid curriculum DAG (Directed Acyclic Graph) formatted in JSON matching the requested schema.",
           responseSchema: analyzerResponseSchema
         });
-
-        const cleanedJson = repairJson(responseText);
-        const parsed = JSON.parse(cleanedJson);
-
-        if (validateTopics(parsed.topics)) {
-          parsed.source = "generated";
-          return parsed;
-        }
-
-        console.warn(`Attempt ${attempts} generated invalid prerequisites/topics. Retrying...`);
-        prompt = `${basePrompt}
-        
-        WARNING: Your previous attempt failed validation (either there were cyclic prerequisites or missing topic IDs).
-        Please ensure all prerequisite IDs exist in the topics list, and that there are absolutely no loops/cycles.`;
-        
-      } catch (error) {
-        console.warn(`Attempt ${attempts} failed to generate or parse roadmap:`, error.message);
+        console.log(`[Planner Pipeline Stage 3] llm.generateContent() succeeded. Response length: ${responseText.length} chars.`);
+      } catch (geminiErr) {
+        console.error(`[Planner Gemini Error] Attempt ${attempts} failed:`, geminiErr.message, geminiErr.stack);
         if (attempts >= maxAttempts) {
-          console.warn("Exceeded max attempts. Falling back to structured fallback roadmap.");
-          return runFallback();
+          return runFallback(`Gemini API call failed after ${maxAttempts} attempts: ${geminiErr.message}`);
         }
-        prompt = `${basePrompt}
-        
-        WARNING: The previous attempt threw a parsing or generation error: "${error.message}". Please ensure valid JSON formatting.`;
+        prompt = `${basePrompt}\n\nWARNING: Previous attempt failed with error: "${geminiErr.message}". Ensure valid output.`;
+        continue;
+      }
+
+      let cleanedJson;
+      let parsed;
+      try {
+        cleanedJson = repairJson(responseText);
+        parsed = JSON.parse(cleanedJson);
+        console.log(`[Planner Pipeline Stage 4] JSON parse succeeded.`);
+      } catch (jsonErr) {
+        console.error(`[Planner JSON Parse Failure] Error: ${jsonErr.message}`);
+        console.error(`[Planner JSON Parse Failure] Raw Gemini Response:\n${responseText}`);
+        if (attempts >= maxAttempts) {
+          return runFallback(`JSON parsing failed after ${maxAttempts} attempts: ${jsonErr.message}`);
+        }
+        prompt = `${basePrompt}\n\nWARNING: The previous attempt threw a JSON syntax error: "${jsonErr.message}". Ensure valid JSON formatting.`;
+        continue;
+      }
+
+      const isValid = validateTopics(parsed.topics);
+      if (isValid) {
+        console.log(`[Planner Pipeline Stage 5] Schema validation succeeded for goal "${goal}". Source: "generated".`);
+        parsed.source = "generated";
+        return parsed;
+      } else {
+        console.warn(`[Planner Pipeline Stage 5] Schema validation failed for Attempt ${attempts}.`);
+        if (attempts >= maxAttempts) {
+          return runFallback(`Schema validation failed on topics array after ${maxAttempts} attempts.`);
+        }
+        prompt = `${basePrompt}\n\nWARNING: Your previous attempt failed topic/prerequisite validation. Ensure all prerequisite IDs exist in the topics list and there are no loops.`;
       }
     }
 
-    console.warn("Roadmap validation failed after all attempts. Falling back to structured fallback roadmap.");
-    return runFallback();
+    return runFallback(`Exceeded max attempts (${maxAttempts}) without valid DAG structure.`);
   } catch (globalError) {
-    console.warn("Gemini service failed globally. Falling back to structured fallback roadmap:", globalError.message);
-    return runFallback();
+    return runFallback(`Uncaught Exception in analyzeGoal: ${globalError.message}\nStack: ${globalError.stack}`);
   }
 }
 

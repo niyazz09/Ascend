@@ -412,12 +412,12 @@ export default function Quiz() {
                       onClick={() => setSelectedIndex(idx)}
                       className={`w-full flex items-center justify-between p-4 rounded-lg border text-left text-sm transition-all ${
                         showCorrect
-                          ? 'border-success-300 bg-success-50/50 text-success-900 font-medium'
+                          ? 'border-success-300 dark:border-success-500 bg-success-50/50 dark:bg-success-950/20 text-success-900 dark:text-success-300 font-medium'
                           : showIncorrect
-                            ? 'border-rose-300 bg-rose-50/50 text-danger-900'
+                            ? 'border-rose-300 dark:border-danger-500 bg-rose-50/50 dark:bg-rose-950/20 text-danger-900 dark:text-danger-300'
                             : isSelected
-                              ? 'border-accent-500 bg-accent-50/30 text-accent-900 font-medium'
-                              : 'border-base-600 hover:bg-slate-50 text-slate-700'
+                              ? 'border-accent-500 dark:border-accent-400 bg-accent-50/30 dark:bg-accent-950/25 text-accent-900 dark:text-accent-300 font-medium'
+                              : 'border-base-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       <span>{option}</span>
@@ -444,8 +444,8 @@ export default function Quiz() {
                   <div
                     className={`p-4 rounded-lg border ${
                       selectedIndex === current.correctIndex
-                        ? 'bg-success-50 border-success-200 text-success-800'
-                        : 'bg-rose-50 border-rose-200 text-danger-800'
+                        ? 'bg-success-50 dark:bg-success-950/20 border-success-200 dark:border-success-800/40 text-success-800 dark:text-success-300'
+                        : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40 text-danger-800 dark:text-danger-300'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1.5 font-semibold text-sm">

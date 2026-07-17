@@ -1,4 +1,7 @@
 require('dotenv').config();
+const { validateConfig } = require('./config');
+validateConfig();
+
 const express = require('express');
 const cors = require('cors');
 
@@ -9,12 +12,22 @@ const { quizRouter, submitHandler } = require('./routes/quiz');
 const analyzerRoutes = require('./routes/analyzer');
 const dashboardRoutes = require('./routes/dashboard');
 const orchestratorRoutes = require('./routes/orchestrator');
+const resourcesRoutes = require('./routes/resources');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = [process.env.FRONTEND_ORIGIN || 'http://localhost:5173'];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS origin blocked'));
+    }
+  }
+}));
 app.use(express.json());
 
 // Health check endpoint
@@ -33,6 +46,7 @@ app.post('/submit', authenticateToken, submitHandler);
 app.use('/analysis', analyzerRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/orchestrate', orchestratorRoutes);
+app.use('/resources', resourcesRoutes);
 
 if (require.main === module) {
   app.listen(PORT, () => {

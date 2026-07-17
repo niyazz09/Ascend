@@ -7,7 +7,6 @@ import {
   Palette,
   Shield,
   Trash2,
-  Camera,
   Check,
   Sun,
   Moon,
@@ -24,6 +23,7 @@ import {
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import Avatar from '../components/ui/Avatar';
 
 type Speed = 'relaxed' | 'balanced' | 'intensive';
 
@@ -148,7 +148,7 @@ function ThemeOption({
       className={`relative flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors ${
         active
           ? 'border-accent-500 bg-accent-50'
-          : 'border-base-600 bg-white hover:border-base-500'
+          : 'border-base-600 bg-base-800 hover:border-base-500'
       }`}
     >
       <Icon
@@ -193,7 +193,7 @@ function SpeedOption({
       className={`flex-1 text-left p-3 rounded-lg border transition-colors ${
         active
           ? 'border-accent-500 bg-accent-50'
-          : 'border-base-600 bg-white hover:border-base-500'
+          : 'border-base-600 bg-base-800 hover:border-base-500'
       }`}
     >
       <div className="flex items-center gap-2">
@@ -268,36 +268,14 @@ export default function Settings() {
         >
           {/* Avatar */}
           <div className="flex items-center gap-4 mb-5">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-accent-100 flex items-center justify-center text-accent-700 font-semibold text-xl">
-                {name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-              <button
-                type="button"
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border border-base-600 shadow-sm flex items-center justify-center text-slate-600 hover:text-accent-600 hover:border-accent-300 transition-colors"
-                aria-label="Change avatar"
-              >
-                <Camera className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <Avatar name={name} size="lg" />
             <div>
-              <p className="text-sm font-medium text-slate-900">
-                Profile Picture
+              <p className="text-sm font-semibold text-slate-900">
+                Personalized Avatar
               </p>
               <p className="text-xs text-slate-500 mt-0.5">
-                PNG or JPG, up to 2MB
+                Generated automatically from your initials.
               </p>
-              <button
-                type="button"
-                className="mt-2 text-xs font-medium text-accent-600 hover:text-accent-700 transition-colors"
-              >
-                Upload new image
-              </button>
             </div>
           </div>
 
@@ -480,9 +458,9 @@ export default function Settings() {
           delay={0.2}
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 p-3.5 rounded-lg border border-base-600 bg-slate-50">
+            <div className="flex items-center justify-between gap-3 p-3.5 rounded-lg border border-base-600 bg-base-900">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-base-600 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-base-800 border border-base-600 flex items-center justify-center shrink-0">
                   <Lock className="w-4 h-4 text-slate-600" />
                 </div>
                 <div className="min-w-0">
@@ -499,9 +477,9 @@ export default function Settings() {
               </button>
             </div>
 
-            <div className="flex items-center justify-between gap-3 p-3.5 rounded-lg border border-base-600 bg-slate-50">
+            <div className="flex items-center justify-between gap-3 p-3.5 rounded-lg border border-base-600 bg-base-900">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-base-600 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-base-800 border border-base-600 flex items-center justify-center shrink-0">
                   <LogOut className="w-4 h-4 text-slate-600" />
                 </div>
                 <div className="min-w-0">
@@ -534,9 +512,9 @@ export default function Settings() {
           description="Irreversible actions. Proceed with caution."
           delay={0.25}
         >
-          <div className="p-4 rounded-lg border border-rose-200 bg-rose-50">
+          <div className="p-4 rounded-lg border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-950/20">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white border border-rose-200 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-base-800 border border-rose-200 dark:border-rose-900/30 flex items-center justify-center shrink-0">
                 <Trash2 className="w-4 h-4 text-danger-600" />
               </div>
               <div className="min-w-0 flex-1">
@@ -551,7 +529,7 @@ export default function Settings() {
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-danger-600 hover:text-danger-500 border border-rose-300 hover:border-rose-400 bg-white px-3 py-1.5 rounded-lg transition-colors"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-danger-600 hover:text-danger-500 border border-rose-300 dark:border-rose-800/60 hover:border-rose-400 bg-base-800 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete Account

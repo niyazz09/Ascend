@@ -16,6 +16,8 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import Resources from './pages/Resources';
+import AboutAscend from './pages/AboutAscend';
 
 export default function App() {
   return (
@@ -35,6 +37,8 @@ export default function App() {
               <Route path="/focused-session" element={<FocusedSession />} />
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/analysis" element={<Analysis />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/about" element={<AboutAscend />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/notifications" element={<Notifications />} />

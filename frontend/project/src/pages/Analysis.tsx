@@ -321,9 +321,9 @@ export default function Analysis() {
                       {active.weakAreas.map((w: string, i: number) => (
                         <div
                           key={w}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-rose-50/50 border border-rose-100"
+                          className="flex items-center gap-3 p-3 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30"
                         >
-                          <span className="w-6 h-6 rounded-md bg-white border border-rose-200 flex items-center justify-center text-xs font-medium text-danger-600">
+                          <span className="w-6 h-6 rounded-md bg-base-800 border border-rose-200 dark:border-rose-900/30 flex items-center justify-center text-xs font-medium text-danger-600">
                             {i + 1}
                           </span>
                           <span className="text-sm text-slate-700 flex-1">{w}</span>
@@ -350,7 +350,7 @@ export default function Analysis() {
                     {active.strongAreas.map((s: string) => (
                       <div
                         key={s}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50/50 border border-emerald-100"
+                        className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30"
                       >
                         <CheckCircle2 className="w-4 h-4 text-success-600 shrink-0" />
                         <span className="text-sm text-slate-700 flex-1">{s}</span>

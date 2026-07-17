@@ -3,7 +3,7 @@ const router = express.Router();
 const { generateRoadmap } = require('../agents/planner');
 const { getLearner, createLearner } = require('../store');
 const { analyzeGoal } = require('../agents/learningGoalAnalyzer');
-const geminiService = require('../services/gemini');
+const llmService = require('../services/llm');
 const { authenticateToken } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 
@@ -126,15 +126,16 @@ router.get('/topic-details', authenticateToken, async (req, res) => {
     let source = "generated";
     let parsed = null;
 
-    if (!process.env.GEMINI_API_KEY) {
-      console.warn("GEMINI_API_KEY environment variable is missing. Running in local fallback mode.");
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("LLM API key is missing. Running in local fallback mode.");
       attempts = maxAttempts;
     }
 
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        responseText = await geminiService.generateContent({
+        responseText = await llmService.generateContent({
           prompt,
           systemInstruction: "You are the ASCEND Curriculum Details Generator. Provide highly detailed lesson content and resource links (documentation, youtube, books, practice_platforms, interactive_resources) in JSON format matching the requested schema.",
           responseSchema
@@ -180,6 +181,79 @@ router.get('/topic-details', authenticateToken, async (req, res) => {
 
     parsed.source = source;
     res.json(parsed);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /planner/generate-project
+router.post('/generate-project', authenticateToken, async (req, res) => {
+  try {
+    const { topicTitle, goal } = req.body;
+    const topic = topicTitle || "Web Development";
+    const targetGoal = goal || "Software Engineering";
+
+    const responseSchema = {
+      type: "OBJECT",
+      properties: {
+        projectName: { type: "STRING" },
+        difficulty: { type: "STRING" },
+        description: { type: "STRING" },
+        features: { type: "ARRAY", items: { type: "STRING" } },
+        techStack: { type: "ARRAY", items: { type: "STRING" } },
+        folderStructure: { type: "STRING" },
+        implementationSteps: { type: "ARRAY", items: { type: "STRING" } },
+        bonusFeatures: { type: "ARRAY", items: { type: "STRING" } },
+        learningOutcomes: { type: "ARRAY", items: { type: "STRING" } },
+        estimatedTime: { type: "STRING" }
+      },
+      required: ["projectName", "difficulty", "description", "features", "techStack", "folderStructure", "implementationSteps", "bonusFeatures", "learningOutcomes", "estimatedTime"]
+    };
+
+    const prompt = `Generate a comprehensive hands-on mini portfolio project for the topic "${topic}" within the learning goal "${targetGoal}".
+    Provide project name, difficulty level, concise description, list of core features, required tech stack, folder tree structure string, step-by-step implementation guide, bonus extension challenges, learning outcomes, and estimated completion time.`;
+
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.json({
+        projectName: `${topic} Master Application`,
+        difficulty: "Intermediate",
+        description: `Build a complete production-grade practical project integrating ${topic} concepts.`,
+        features: [`Implement core ${topic} pipeline`, "Add error handling and state persistence", "Build responsive modern UI"],
+        techStack: [topic, "JavaScript/TypeScript", "Node.js", "CSS"],
+        folderStructure: `src/\n├── components/\n├── services/\n├── utils/\n└── index.js`,
+        implementationSteps: [`Initialize project workspace`, `Implement data models for ${topic}`, `Build user interface & connect handlers`, `Test edge cases and deploy`],
+        bonusFeatures: ["Add dark mode toggle", "Write unit tests for core handlers"],
+        learningOutcomes: [`Solidify real-world understanding of ${topic}`, "Enhance portfolio credentials"],
+        estimatedTime: "3-5 hours",
+        source: "fallback"
+      });
+    }
+
+    try {
+      const responseText = await llmService.generateContent({
+        prompt,
+        systemInstruction: "You are the ASCEND Hands-on Project Architect. Generate detailed portfolio project blueprints in JSON matching the schema.",
+        responseSchema
+      });
+      const parsed = JSON.parse(responseText);
+      parsed.source = "generated";
+      return res.json(parsed);
+    } catch (err) {
+      return res.json({
+        projectName: `${topic} Hands-On Project`,
+        difficulty: "Intermediate",
+        description: `Build a complete application applying core principles of ${topic}.`,
+        features: [`Core ${topic} features`, "Interactive UI", "Data validation"],
+        techStack: [topic, "JavaScript", "HTML/CSS"],
+        folderStructure: `src/\n├── app.js\n└── index.html`,
+        implementationSteps: [`Set up project structure`, `Implement ${topic} logic`, `Verify and test`],
+        bonusFeatures: ["Add performance optimizations"],
+        learningOutcomes: [`Master ${topic} practically`],
+        estimatedTime: "2-4 hours",
+        source: "fallback"
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

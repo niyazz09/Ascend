@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Code2,
   Timer,
+  Play,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../context/AuthContext';
@@ -573,28 +574,61 @@ export default function FocusedSession() {
                 </div>
 
                 {sessionDetails.resources && Object.keys(sessionDetails.resources).length > 0 && (
-                  <div className="border-t border-base-600 pt-6 mt-6">
-                    <h4 className="text-base font-semibold text-slate-900 mb-3">
-                      Recommended Resources
+                  <div className="border-t border-base-600 pt-6 mt-6 space-y-4">
+                    <h4 className="text-base font-semibold text-slate-900">
+                      Curated Video & Masterclass Resources
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {Object.entries(sessionDetails.resources).map(([key, val]: any) => {
                         if (!val) return null;
-                        const formattedKey = key.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+                        const titleStr = typeof val === 'string' ? val : val.title || key;
+                        const linkStr = typeof val === 'string'
+                          ? (val.startsWith('http') ? val : `https://youtube.com/results?search_query=${encodeURIComponent(val)}`)
+                          : (val.link || `https://youtube.com/results?search_query=${encodeURIComponent(val.title || key)}`);
+
+                        const isVideo = key.toLowerCase().includes('video') || key.toLowerCase().includes('youtube');
+
                         return (
-                          <a
+                          <div
                             key={key}
-                            href={val.startsWith('http') ? val : `https://google.com/search?q=${encodeURIComponent(val)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between p-3 rounded-lg border border-base-600 hover:bg-slate-50 transition-colors text-sm text-slate-700 bg-white"
+                            className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition-all space-y-3 shadow-sm flex flex-col justify-between"
                           >
-                            <span className="font-medium">{formattedKey}</span>
-                            <span className="text-xs text-accent-600 font-semibold flex items-center gap-1">
-                              Explore
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </span>
-                          </a>
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                <Play className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                  {key.replace('_', ' ')}
+                                </span>
+                                <h5 className="text-xs font-bold text-slate-900 truncate">
+                                  {titleStr}
+                                </h5>
+                                <p className="text-[11px] text-slate-500">YouTube Verified Masterclass</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                              <a
+                                href={linkStr}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 py-1.5 px-3 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[11px] font-semibold transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <Play className="w-3 h-3 fill-white" />
+                                Watch on YouTube
+                              </a>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(linkStr);
+                                  alert('YouTube link copied to clipboard!');
+                                }}
+                                className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors shrink-0"
+                              >
+                                📋 Copy Link
+                              </button>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>

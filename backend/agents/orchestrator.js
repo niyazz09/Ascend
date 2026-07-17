@@ -1,4 +1,4 @@
-const geminiService = require('../services/gemini');
+const llmService = require('../services/llm');
 const { generateRoadmap } = require('./planner');
 const { generateQuiz } = require('./quizGenerator');
 const { analyzeLearner } = require('./analyzer');
@@ -32,7 +32,7 @@ const systemInstruction = `You are the ASCEND Orchestrator Agent. Your task is t
 Extract the 'goal' (e.g., "Frontend Developer", "Machine Learning") if they want to learn, and the 'topicId' if they specify a topic for quiz/submit. Return your classification as a valid JSON matching the specified schema.`;
 
 /**
- * Fallback parser using prompt keyword matching in case Gemini API is not configured or fails.
+ * Fallback parser using prompt keyword matching in case LLM API is not configured or fails.
  * @param {string} input - The user prompt
  * @returns {string} One of: "learn", "quiz", "submit", "analyze"
  */
@@ -56,14 +56,14 @@ function detectIntentFallback(input) {
 }
 
 /**
- * Orchestrates execution of specialist agents based on intent detected from input using Gemini.
+ * Orchestrates execution of specialist agents based on intent detected from input using LLM.
  *
  * @param {Object} params
  * @param {string} params.userId - Authenticated user identifier
  * @param {string} params.input - User natural language prompt
  * @param {Object} [params.learnerState={}] - Current learner mastery and evidence state
  * @param {Array<Object>} [params.topics=[]] - Database of roadmap topics
- * @param {Object} [params.additionalParams={}] - Specific inputs for inner agents (e.g. goal, difficulty, topicId, questionResult)
+ * @param {Object} [params.additionalParams={}] - Specific inputs for inner agents
  * @returns {Promise<Object>} Unified analysis and roadmap details
  */
 async function orchestrate({ userId, input, learnerState = {}, topics = [], additionalParams = {} }) {
@@ -71,10 +71,10 @@ async function orchestrate({ userId, input, learnerState = {}, topics = [], addi
   let detectedGoal = "";
   let detectedTopicId = "";
 
-  // Attempt to use Google Gemini AI classifier first
-  if (process.env.GEMINI_API_KEY) {
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY;
+  if (apiKey) {
     try {
-      const aiResponse = await geminiService.generateContent({
+      const aiResponse = await llmService.generateContent({
         prompt: input,
         systemInstruction,
         responseSchema
@@ -84,7 +84,7 @@ async function orchestrate({ userId, input, learnerState = {}, topics = [], addi
       detectedGoal = parsed.goal;
       detectedTopicId = parsed.topicId;
     } catch (error) {
-      console.warn("Gemini Orchestrator execution failed, using fallback:", error.message);
+      console.warn("LLM Orchestrator execution failed, using fallback:", error.message);
       intent = detectIntentFallback(input);
     }
   } else {

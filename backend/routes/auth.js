@@ -7,7 +7,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { authenticateToken } = require('../middleware/auth');
 
-const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
+const { JWT_SECRET } = require('../config');
 
 // POST /auth/signup
 router.post('/signup', async (req, res) => {

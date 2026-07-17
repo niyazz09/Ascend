@@ -461,6 +461,78 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Daily AI Missions & Badges */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Daily AI Missions */}
+          <div className="card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-amber-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900">Today's Daily AI Missions</h3>
+              </div>
+              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">+150 XP Reward</span>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
+                <span className="flex items-center gap-2">
+                  <input type="checkbox" defaultChecked className="rounded text-indigo-600 focus:ring-indigo-500" />
+                  Watch 20 minutes of study material
+                </span>
+                <span className="font-bold text-emerald-600">+40 XP</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
+                <span className="flex items-center gap-2">
+                  <input type="checkbox" defaultChecked className="rounded text-indigo-600 focus:ring-indigo-500" />
+                  Complete 1 Roadmap Topic
+                </span>
+                <span className="font-bold text-emerald-600">+50 XP</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
+                <span className="flex items-center gap-2">
+                  <input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" />
+                  Attempt Topic Assessment Quiz
+                </span>
+                <span className="font-bold text-indigo-600">+60 XP</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Achievements Grid */}
+          <div className="card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Unlocked Badges & Achievements</h3>
+              <span className="text-xs text-slate-500 font-medium">3 / 8 Unlocked</span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-3 text-center">
+              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-2xl space-y-1">
+                <div className="text-2xl">🔥</div>
+                <div className="text-[10px] font-bold text-indigo-900">Streak Master</div>
+              </div>
+
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-1">
+                <div className="text-2xl">⚡</div>
+                <div className="text-[10px] font-bold text-amber-900">Quiz Ace</div>
+              </div>
+
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1">
+                <div className="text-2xl">🎓</div>
+                <div className="text-[10px] font-bold text-emerald-900">Roadmap Pioneer</div>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 opacity-40">
+                <div className="text-2xl">🚀</div>
+                <div className="text-[10px] font-bold text-slate-600">Pro Developer</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </PageLayout>
   );

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../context/AuthContext';
+import Avatar from '../components/ui/Avatar';
 
 function StatTile({
   icon: Icon,
@@ -72,12 +73,6 @@ export default function Profile() {
 
   const name = user?.name || user?.email.split('@')[0] || 'Learner';
   const email = user?.email || 'learner@ascend.app';
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 
   if (loading) {
     return (
@@ -118,9 +113,7 @@ export default function Profile() {
           className="card p-6"
         >
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full bg-accent-100 flex items-center justify-center text-accent-700 font-semibold text-xl">
-              {initials}
-            </div>
+            <Avatar name={name} size="xl" className="border-2 border-white dark:border-slate-800 ring-4 ring-accent-50 dark:ring-accent-950/20" />
             <div className="min-w-0">
               <h2 className="text-xl font-semibold text-slate-900 tracking-tight">
                 {name}
@@ -129,6 +122,9 @@ export default function Profile() {
                 <Mail className="w-3.5 h-3.5" />
                 {email}
               </p>
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30 text-xs font-semibold">
+                Verified ASCEND Student
+              </div>
             </div>
           </div>
         </motion.div>

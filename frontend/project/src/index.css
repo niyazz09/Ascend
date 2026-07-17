@@ -57,7 +57,31 @@ html.dark body {
 
 /* Override base elements */
 html.dark * {
-  border-color: #334155 !important; /* slate-700 */
+  border-color: #334155; /* slate-700 */
+}
+
+/* Base utility overrides for dark mode */
+html.dark .bg-base-900,
+html.dark .bg-base-700 {
+  background-color: #0f172a !important;
+}
+
+html.dark .bg-base-800 {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* Headings in Dark Mode */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #f8fafc !important; /* slate-50 */
 }
 
 /* Card overrides */
@@ -67,8 +91,17 @@ html.dark .card {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.4) !important;
 }
 
-/* Input overrides */
+/* Layout overrides */
+html.dark aside,
+html.dark header {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+/* Input & Form overrides */
 html.dark .input,
+html.dark select,
+html.dark textarea,
 html.dark input[type="text"],
 html.dark input[type="email"],
 html.dark input[type="password"] {
@@ -80,6 +113,9 @@ html.dark input[type="password"] {
 /* Text color overrides */
 html.dark .text-slate-900 {
   color: #f8fafc !important; /* slate-50 */
+}
+html.dark .text-slate-800 {
+  color: #f1f5f9 !important;
 }
 html.dark .text-slate-700 {
   color: #cbd5e1 !important; /* slate-300 */
@@ -102,6 +138,17 @@ html.dark .bg-slate-100 {
   background-color: #334155 !important;
 }
 
+/* Table overrides */
+html.dark tr {
+  border-color: #334155 !important;
+}
+html.dark th {
+  color: #94a3b8 !important;
+}
+html.dark td {
+  color: #cbd5e1 !important;
+}
+
 /* Button secondary overrides */
 html.dark .btn-secondary {
   background-color: #1e293b !important;
@@ -119,10 +166,10 @@ html.dark .badge {
 
 /* Custom backgrounds and highlights */
 html.dark .bg-accent-50 {
-  background-color: rgba(37, 99, 235, 0.15) !important; /* semi-transparent accent */
+  background-color: rgba(37, 99, 235, 0.15) !important;
 }
 html.dark .text-accent-700 {
-  color: #60a5fa !important; /* lighter accent text */
+  color: #60a5fa !important;
 }
 html.dark .text-accent-600 {
   color: #3b82f6 !important;
@@ -139,4 +186,3 @@ html.dark .bg-rose-50 {
 html.dark .border-base-600 {
   border-color: #334155 !important;
 }
-
