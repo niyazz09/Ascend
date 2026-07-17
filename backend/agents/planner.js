@@ -18,8 +18,8 @@ const MASTERY_THRESHOLD = 80;
  * @returns {Object} Structured roadmap, completed/remaining topics, progress, and estimated steps
  */
 function generateRoadmap({ goal, learnerState = {}, topics = [] }) {
-  // Unknown goals return an empty roadmap configuration rather than throwing
-  if (!goal || goal.toLowerCase() !== "frontend developer") {
+  // Return empty if no topics are generated/available
+  if (!topics || topics.length === 0) {
     return {
       goal: goal || "",
       roadmap: [],

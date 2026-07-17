@@ -142,7 +142,7 @@ test('Planner Agent Tests', async (t) => {
     const result = generateRoadmap({
       goal: "Backend Developer",
       learnerState: {},
-      topics: mockTopics
+      topics: []
     });
 
     assert.strictEqual(result.goal, "Backend Developer");
