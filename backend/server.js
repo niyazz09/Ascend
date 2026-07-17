@@ -2,10 +2,14 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+const authRoutes = require('./routes/auth');
 const plannerRoutes = require('./routes/planner');
 const mentorRoutes = require('./routes/mentor');
 const { quizRouter, submitHandler } = require('./routes/quiz');
 const analyzerRoutes = require('./routes/analyzer');
+const dashboardRoutes = require('./routes/dashboard');
+const orchestratorRoutes = require('./routes/orchestrator');
+const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,12 +22,17 @@ app.get('/health', (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Mount integrated routes
+// Authentication routes
+app.use('/auth', authRoutes);
+
+// Mount protected routes
 app.use('/planner', plannerRoutes);
 app.use('/mentor', mentorRoutes);
 app.use('/quiz', quizRouter);
-app.post('/submit', submitHandler);
+app.post('/submit', authenticateToken, submitHandler);
 app.use('/analysis', analyzerRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/orchestrate', orchestratorRoutes);
 
 if (require.main === module) {
   app.listen(PORT, () => {

@@ -4,12 +4,14 @@ const { analyzeLearner } = require('../agents/analyzer');
 const { generateRoadmap } = require('../agents/planner');
 const { getLearner, createLearner } = require('../store');
 const topics = require('../data/topics.json');
+const { authenticateToken } = require('../middleware/auth');
 
-router.get('/', (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    let learner = getLearner("default-learner");
+    const userId = req.user.id;
+    let learner = await getLearner(userId);
     if (!learner) {
-      learner = createLearner("default-learner");
+      learner = await createLearner(userId);
     }
 
     // Re-generate current roadmap to get correct progress and next/locked statuses

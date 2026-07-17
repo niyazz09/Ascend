@@ -3,8 +3,9 @@ const router = express.Router();
 const { generateQuiz } = require('../agents/quizGenerator');
 const { updateMastery } = require('../engine/mastery');
 const { getLearner, createLearner, saveLearner } = require('../store');
+const { authenticateToken } = require('../middleware/auth');
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
   try {
     const { topicId, difficulty, questionCount } = req.body;
     const quiz = await generateQuiz({ topicId, difficulty, questionCount });
@@ -21,9 +22,10 @@ async function submitHandler(req, res) {
       return res.status(400).json({ error: "Missing topicId or questionResult" });
     }
 
-    let learner = getLearner("default-learner");
+    const userId = req.user.id;
+    let learner = await getLearner(userId);
     if (!learner) {
-      learner = createLearner("default-learner");
+      learner = await createLearner(userId);
     }
 
     const result = updateMastery({ learnerState: learner, topicId, questionResult });
@@ -32,7 +34,7 @@ async function submitHandler(req, res) {
       learner.evidenceLog = [];
     }
     learner.evidenceLog.push(result.evidence);
-    saveLearner("default-learner", learner);
+    await saveLearner(userId, learner);
 
     res.json(result);
   } catch (error) {

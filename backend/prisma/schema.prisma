@@ -1,0 +1,101 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  passwordHash   String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  goals          LearningGoal[]
+  masteries      Mastery[]
+  evidenceLogs   EvidenceLog[]
+  recommendation Recommendation?
+}
+
+model LearningGoal {
+  id        String   @id @default(uuid())
+  title     String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmap   Roadmap?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Roadmap {
+  id                 String        @id @default(uuid())
+  goalId             String        @unique
+  goal               LearningGoal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  progressPercentage Float         @default(0.0)
+  nodes              RoadmapNode[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model RoadmapNode {
+  id            String   @id @default(uuid())
+  roadmapId     String
+  roadmap       Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  topicId       String
+  title         String
+  status        String   // "completed", "next", "locked"
+  prerequisites String[] // Native PostgreSQL string array
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([roadmapId, topicId])
+  @@index([roadmapId])
+}
+
+model Mastery {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId      String
+  score        Float         @default(0.0)
+  updatedAt    DateTime      @updatedAt
+  evidenceLogs EvidenceLog[]
+
+  @@unique([userId, topicId])
+  @@index([userId])
+}
+
+model EvidenceLog {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  masteryId     String
+  mastery       Mastery  @relation(fields: [masteryId], references: [id], onDelete: Cascade)
+  topicId       String
+  difficulty    Float
+  correct       Boolean
+  questionType  String
+  delta         Float
+  previousScore Float
+  newScore      Float
+  timestamp     DateTime @default(now())
+
+  @@index([userId])
+  @@index([masteryId])
+  @@index([topicId])
+}
+
+model Recommendation {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nextTopic    String?
+  reviewTopics String[]
+  focusAreas   String[]
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
