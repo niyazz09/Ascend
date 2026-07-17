@@ -1,13 +1,10 @@
 require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const { validateConfig } = require('./config');
-validateConfig();
+const { authenticateToken } = require('./middleware/auth');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+// Import routes
 const authRoutes = require('./routes/auth');
 const plannerRoutes = require('./routes/planner');
 const mentorRoutes = require('./routes/mentor');
@@ -16,11 +13,19 @@ const analyzerRoutes = require('./routes/analyzer');
 const dashboardRoutes = require('./routes/dashboard');
 const orchestratorRoutes = require('./routes/orchestrator');
 const resourcesRoutes = require('./routes/resources');
-const { authenticateToken } = require('./middleware/auth');
 
+// Validate critical configurations
+validateConfig();
+
+// Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_ORIGIN,
   "http://localhost:5173"
