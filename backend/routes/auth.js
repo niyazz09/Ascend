@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
+const { authenticateToken } = require('../middleware/auth');
+
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 
 // POST /auth/signup
@@ -75,6 +77,19 @@ router.post('/login', async (req, res) => {
         email: user.email
       }
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /auth/delete-account
+router.delete('/delete-account', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+    res.json({ message: "Account deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

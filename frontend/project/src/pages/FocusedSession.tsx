@@ -339,10 +339,42 @@ export default function FocusedSession() {
     resources: activeTopicNode.resources || dynamicDetails?.resources || {}
   };
 
-  const markComplete = () => {
-    if (completed) return;
-    setCompleted(true);
-    setRunning(false);
+  const [submittingComplete, setSubmittingComplete] = useState(false);
+
+  const markComplete = async () => {
+    if (completed || submittingComplete) return;
+    setSubmittingComplete(true);
+    try {
+      const res = await fetchWithAuth('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topicId: activeTopicId,
+          questionResult: {
+            difficulty: 80,
+            correct: true,
+            questionType: "focused_session",
+            timestamp: Date.now()
+          }
+        })
+      });
+      if (res.ok) {
+        setCompleted(true);
+        setRunning(false);
+        // Refresh dashboard data to reflect progress update
+        const dashRes = await fetchWithAuth('/dashboard');
+        if (dashRes.ok) {
+          const dashJson = await dashRes.json();
+          setDashboardData(dashJson);
+        }
+      } else {
+        alert('Failed to save session progress');
+      }
+    } catch (err) {
+      console.error('Error saving session progress:', err);
+    } finally {
+      setSubmittingComplete(false);
+    }
   };
 
   if (loading) {

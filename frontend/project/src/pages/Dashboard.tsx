@@ -368,7 +368,7 @@ export default function Dashboard() {
                   {continueLearning.estimatedMinutes} min
                 </span>
                 <button
-                  onClick={() => navigate('/quiz')}
+                  onClick={() => navigate('/focused-session')}
                   className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-600 hover:text-accent-700 transition-colors"
                 >
                   Resume
@@ -388,7 +388,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={task.id}
-                    onClick={() => navigate(task.due === 'Next Up' ? '/quiz' : '/roadmap')}
+                    onClick={() => navigate(task.due === 'Next Up' ? '/focused-session' : '/roadmap')}
                     className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-base-600 hover:border-accent-200 hover:bg-white transition-colors cursor-pointer"
                     style={{
                       opacity: 0,

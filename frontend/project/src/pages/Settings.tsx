@@ -217,7 +217,7 @@ function SpeedOption({
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, signOut, updateProfile } = useAuth();
+  const { user, signOut, fetchWithAuth } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const [name, setName] = useState('');
@@ -228,7 +228,6 @@ export default function Settings() {
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [quizReminders, setQuizReminders] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -238,24 +237,27 @@ export default function Settings() {
     }
   }, [user]);
 
-  const handleSave = async () => {
-    if (name.trim()) {
-      await updateProfile(name.trim());
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await fetchWithAuth('/auth/delete-account', {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        await signOut();
+        navigate('/login');
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to delete account');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error communicating with server');
     }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
   };
 
   return (
     <PageLayout
       title="Settings"
       description="Manage your account, preferences, and security."
-      actions={
-        <button onClick={handleSave} className="btn-primary">
-          <Check className="w-4 h-4" />
-          {saved ? 'Saved' : 'Save Changes'}
-        </button>
-      }
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Profile */}
@@ -565,6 +567,7 @@ export default function Settings() {
                     </button>
                     <button
                       type="button"
+                      onClick={handleDeleteAccount}
                       className="inline-flex items-center gap-2 bg-danger-600 hover:bg-danger-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

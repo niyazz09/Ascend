@@ -94,24 +94,65 @@ class QuizProvider {
 /**
  * Mock implementation of QuizProvider returning pre-defined deterministic questions.
  */
+const VALID_TOPIC_IDS = new Set([
+  "html-basics", "css-basics", "javascript-basics", "web-apis", "dom-manipulation",
+  "guitar-anatomy", "guitar-tuning", "guitar-basic-chords", "guitar-strumming", "guitar-transitions", "guitar-songs",
+  "blender-interface", "blender-primitives", "blender-edit-mode", "blender-shaders", "blender-lighting", "blender-rendering",
+  "lang-greetings", "lang-pronunciation", "lang-numbers", "lang-nouns", "lang-verbs", "lang-sentences",
+  "chem-bonding", "chem-nomenclature", "chem-functional", "chem-resonance", "chem-mechanisms",
+  "hist-ancient", "hist-medieval", "hist-modern", "hist-post"
+]);
+
 class MockQuizProvider extends QuizProvider {
-  async generateQuestions({ topicId, difficulty, questionCount }) { // eslint-disable-line no-unused-vars
-    const questionsPool = MOCK_QUESTIONS[topicId];
-    if (!questionsPool) {
+  async generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle }) {
+    if (!VALID_TOPIC_IDS.has(topicId)) {
       throw new Error("Topic not found");
+    }
+    const title = topicTitle || topicId;
+    const questionsPool = MOCK_QUESTIONS[topicId];
+
+    if (questionsPool) {
+      const results = [];
+      for (let i = 0; i < questionCount; i++) {
+        const original = questionsPool[i % questionsPool.length];
+        results.push({
+          id: `${original.id}-${i + 1}`,
+          type: original.type,
+          question: original.question,
+          options: [...original.options],
+          correctAnswer: original.correctAnswer,
+          explanation: original.explanation
+        });
+      }
+      return results;
     }
 
     const results = [];
     for (let i = 0; i < questionCount; i++) {
-      const original = questionsPool[i % questionsPool.length];
-      results.push({
-        id: `${original.id}-${i + 1}`,
-        type: original.type,
-        question: original.question,
-        options: [...original.options],
-        correctAnswer: original.correctAnswer,
-        explanation: original.explanation
-      });
+      if (i % 2 === 0) {
+        results.push({
+          id: `${topicId}-q${i + 1}`,
+          type: "true_false",
+          question: `True or False: Mastering the foundational principles of "${title}" is highly critical for achieving proficiency in "${goalTitle || 'this subject'}".`,
+          options: ["True", "False"],
+          correctAnswer: "True",
+          explanation: `In the study of "${goalTitle || 'this subject'}", "${title}" forms a vital core component that cannot be skipped.`
+        });
+      } else {
+        results.push({
+          id: `${topicId}-q${i + 1}`,
+          type: "mcq",
+          question: `Which of the following is considered a best practice when working with "${title}"?`,
+          options: [
+            `Consistently applying structured techniques for "${title}"`,
+            "Completely ignoring basic prerequisites",
+            "Skipping review sessions and quizzes",
+            "Using incorrect reference structures"
+          ],
+          correctAnswer: `Consistently applying structured techniques for "${title}"`,
+          explanation: `Applying structured techniques is the optimal way to master and apply "${title}" in practice.`
+        });
+      }
     }
     return results;
   }
@@ -156,7 +197,7 @@ class GeminiQuizProvider extends QuizProvider {
     } catch (error) {
       console.warn("GeminiQuizProvider failed, falling back to mock provider:", error.message);
       const mock = new MockQuizProvider();
-      return mock.generateQuestions({ topicId: 'html-basics', difficulty, questionCount });
+      return mock.generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle });
     }
   }
 }
