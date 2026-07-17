@@ -101,7 +101,8 @@ router.get('/', authenticateToken, async (req, res) => {
             topicId: node.topicId,
             title: node.title,
             prerequisites: node.prerequisites,
-            status: node.status
+            status: node.status,
+            resources: node.resources ? JSON.parse(node.resources) : null
           })),
           completedTopics: roadmapNodes.filter(n => n.status === "completed").map(n => n.topicId),
           remainingTopics: roadmapNodes.filter(n => n.status !== "completed").map(n => n.topicId),

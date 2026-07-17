@@ -13,6 +13,7 @@ import {
   BookOpen,
   ListChecks,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../context/AuthContext';
@@ -198,10 +199,51 @@ function NodeCard({
   );
 }
 
-function SidePanel({ node, onClose }: { node: any; onClose: () => void }) {
+function SidePanel({ node, onClose, goal }: { node: any; onClose: () => void; goal: string }) {
   const navigate = useNavigate();
+  const { fetchWithAuth } = useAuth();
+  const [details, setDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(true);
+
   const isLocked = node.status === 'locked';
   const isCompleted = node.status === 'completed';
+
+  useEffect(() => {
+    setLoadingDetails(true);
+    setDetails(null);
+    fetchWithAuth(`/planner/topic-details?topicId=${node.topicId}&topicTitle=${encodeURIComponent(node.title)}&goal=${encodeURIComponent(goal)}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load topic details');
+        return res.json();
+      })
+      .then(json => {
+        setDetails(json);
+        setLoadingDetails(false);
+      })
+      .catch(err => {
+        console.error('Failed to load topic details:', err);
+        // Fallback placeholder content
+        setDetails({
+          lessonTitle: node.title,
+          lessonContent: `Study guide and conceptual checklist for "${node.title}" as part of learning "${goal}".`,
+          objectives: [
+            `Analyze target structures of ${node.title}`,
+            `Synthesize custom templates inside ${node.title}`,
+            `Validate integration patterns`
+          ],
+          keyConcepts: [
+            `Standard design approaches`,
+            `Prerequisites enforcement`
+          ],
+          resources: {
+            documentation: 'https://google.com/search?q=' + encodeURIComponent(node.title + ' documentation'),
+            youtube: 'https://youtube.com/results?search_query=' + encodeURIComponent(node.title),
+            books: 'https://google.com/search?q=' + encodeURIComponent(node.title + ' books')
+          }
+        });
+        setLoadingDetails(false);
+      });
+  }, [node.topicId, node.title, goal]);
 
   return (
     <AnimatePresence>
@@ -214,7 +256,7 @@ function SidePanel({ node, onClose }: { node: any; onClose: () => void }) {
       >
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 h-14 bg-white border-b border-base-600">
           <div className="flex items-center gap-2">
-            <span className={`badge ${difficultyStyles[node.difficulty]}`}>
+            <span className={`badge ${difficultyStyles[node.difficulty] || 'bg-slate-50 text-slate-600 border-base-600'}`}>
               {node.difficulty}
             </span>
             <span className="text-xs text-slate-500">Step {node.order}</span>
@@ -234,7 +276,7 @@ function SidePanel({ node, onClose }: { node: any; onClose: () => void }) {
               {node.title}
             </h2>
             <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-              {node.description}
+              {details?.lessonContent || node.description}
             </p>
           </div>
 
@@ -287,60 +329,104 @@ function SidePanel({ node, onClose }: { node: any; onClose: () => void }) {
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <ListChecks className="w-4 h-4 text-accent-600" />
-              <h3 className="text-sm font-semibold text-slate-900">
-                Learning Objectives
-              </h3>
-            </div>
-            <ul className="space-y-2">
-              {node.objectives.map((obj: string, i: number) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2.5 text-sm text-slate-600"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-success-500 mt-0.5 shrink-0" />
-                  {obj}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="w-4 h-4 text-accent-600" />
-              <h3 className="text-sm font-semibold text-slate-900">Prerequisites</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {node.prerequisites.length > 0 ? (
-                node.prerequisites.map((p: string) => (
-                  <span
-                    key={p}
-                    className="text-xs text-slate-700 bg-slate-50 border border-base-600 px-2.5 py-1.5 rounded-md"
-                  >
-                    {p}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-slate-400 italic">None</span>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-accent-50 border border-accent-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-accent-600" />
+          {node.resources && (
+            <div className="border-t border-base-600 pt-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-accent-600" />
+                <h3 className="text-sm font-semibold text-slate-900">Curated Learning Resources</h3>
               </div>
-              <h3 className="text-sm font-semibold text-slate-900">
-                AI Recommendation
-              </h3>
+              <div className="space-y-3">
+                {Object.entries(typeof node.resources === 'string' ? JSON.parse(node.resources) : node.resources).map(([key, val]: any) => {
+                  if (!val || !val.title) return null;
+                  
+                  let icon = "🌍";
+                  if (key === "books") icon = "📖";
+                  if (key === "videos") icon = "🎥";
+                  if (key === "practice") icon = "💻";
+                  if (key === "interactive") icon = "🧪";
+
+                  return (
+                    <a
+                      key={key}
+                      href={val.link.startsWith('http') ? val.link : `https://google.com/search?q=${encodeURIComponent(val.link)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3.5 rounded-xl border border-base-600 hover:border-accent-500 hover:bg-slate-50 transition-all bg-slate-50/50 hover:bg-slate-50"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl shrink-0 mt-0.5">{icon}</span>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="text-sm font-semibold text-slate-900 hover:text-accent-600 transition-colors">
+                              {val.title}
+                            </h4>
+                            <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-200/50 text-slate-500">
+                              {key}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 leading-normal">
+                            {val.description}
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              {node.aiRecommendation}
-            </p>
-          </div>
+          )}
+
+          {loadingDetails ? (
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="w-6 h-6 border-2 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
+              <p className="text-xs text-slate-500 mt-2">Generating study notes...</p>
+            </div>
+          ) : (
+            details && (
+              <>
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <ListChecks className="w-4 h-4 text-accent-600" />
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Learning Objectives
+                    </h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {details.objectives.map((obj: string, i: number) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2.5 text-sm text-slate-600"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-success-500 mt-0.5 shrink-0" />
+                        {obj}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-4 h-4 text-accent-600" />
+                    <h3 className="text-sm font-semibold text-slate-900">Prerequisites</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {node.prerequisites.length > 0 ? (
+                      node.prerequisites.map((p: string) => (
+                        <span
+                          key={p}
+                          className="text-xs text-slate-700 bg-slate-50 border border-base-600 px-2.5 py-1.5 rounded-md"
+                        >
+                          {p}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">None</span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )
+          )}
 
           <button
             disabled={isLocked}
@@ -383,6 +469,34 @@ export default function Roadmap() {
   const [submitting, setSubmitting] = useState(false);
   const [plannerError, setPlannerError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleDeleteRoadmap = async () => {
+    setDeleting(true);
+    setPlannerError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetchWithAuth('/planner', {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setShowConfirm(false);
+        setGoalInput('');
+        setSuccessMessage("Roadmap cleared successfully. Choose a new career goal.");
+        setTimeout(() => setSuccessMessage(null), 4000);
+        fetchDashboard();
+      } else {
+        const errJson = await res.json();
+        setPlannerError(errJson.error || 'Failed to clear learning goal');
+      }
+    } catch (err: any) {
+      setPlannerError(err.message || 'Error communicating with server');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const fetchDashboard = () => {
     setLoading(true);
@@ -413,6 +527,7 @@ export default function Roadmap() {
 
     setSubmitting(true);
     setPlannerError(null);
+    setSuccessMessage(null);
     try {
       const res = await fetchWithAuth('/planner', {
         method: 'POST',
@@ -511,7 +626,21 @@ export default function Roadmap() {
   const hasRoadmap = data.roadmap && data.roadmap.goal && data.roadmap.roadmap.length > 0;
 
   return (
-    <PageLayout title="Learning Roadmap" description="Your personalized path to mastery.">
+    <PageLayout
+      title="Learning Roadmap"
+      description="Your personalized path to mastery."
+      actions={
+        hasRoadmap ? (
+          <button
+            onClick={() => setShowConfirm(true)}
+            className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3.5 py-2 rounded-lg border border-base-600 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Change Goal
+          </button>
+        ) : undefined
+      }
+    >
       {!hasRoadmap ? (
         <div className="max-w-xl mx-auto mt-8">
           <div className="card p-6 border-accent-200 bg-accent-50/20">
@@ -524,6 +653,11 @@ export default function Roadmap() {
             <p className="text-sm text-slate-600 mb-6">
               Enter a learning objective (e.g. "Frontend Developer", "Machine Learning", "Backend Architect") to dynamically generate your structured path.
             </p>
+            {successMessage && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-[13px] text-success-700 mb-4">
+                {successMessage}
+              </div>
+            )}
             {plannerError && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-danger-600 mb-4">
                 {plannerError}
@@ -625,14 +759,7 @@ export default function Roadmap() {
               ))}
             </div>
             <button
-              onClick={() => {
-                if (confirm('Are you sure you want to change your learning goal? This will reset active progress for the new path.')) {
-                  setData({
-                    ...data,
-                    roadmap: { goal: '', roadmap: [], progressPercentage: 0 }
-                  });
-                }
-              }}
+              onClick={() => setShowConfirm(true)}
               className="text-xs font-semibold text-slate-500 hover:text-accent-700 transition-colors"
             >
               Reset Goal
@@ -663,8 +790,41 @@ export default function Roadmap() {
                   onClick={() => setSelected(null)}
                   className="fixed inset-0 z-40 bg-slate-900/40"
                 />
-                <SidePanel node={selected} onClose={() => setSelected(null)} />
+                <SidePanel node={selected} onClose={() => setSelected(null)} goal={data?.roadmap?.goal || ''} />
               </>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {showConfirm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="card max-w-md w-full p-6 bg-white border border-base-600 shadow-xl m-4"
+                >
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Reset Learning Goal</h3>
+                  <p className="text-sm text-slate-500 mb-6">
+                    This will permanently delete your current roadmap and progress. Continue?
+                  </p>
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      onClick={() => setShowConfirm(false)}
+                      disabled={deleting}
+                      className="btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeleteRoadmap}
+                      disabled={deleting}
+                      className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {deleting ? 'Deleting...' : 'Continue'}
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </>

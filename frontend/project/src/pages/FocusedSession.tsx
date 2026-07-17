@@ -238,6 +238,8 @@ export default function FocusedSession() {
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
 
+  const [dynamicDetails, setDynamicDetails] = useState<any>(null);
+
   const loadDashboard = () => {
     setLoading(true);
     setError(null);
@@ -248,7 +250,49 @@ export default function FocusedSession() {
       })
       .then(json => {
         setDashboardData(json);
-        setLoading(false);
+        const activeTopicId = json.recommendations?.nextTopic || 'html-basics';
+        const activeTopicNode = json.roadmap?.roadmap?.find((n: any) => n.topicId === activeTopicId) 
+          || json.roadmap?.roadmap?.[0]
+          || { title: 'HTML Basics', topicId: 'html-basics' };
+        const goal = json.roadmap?.goal || 'General';
+
+        fetchWithAuth(`/planner/topic-details?topicId=${activeTopicId}&topicTitle=${encodeURIComponent(activeTopicNode.title)}&goal=${encodeURIComponent(goal)}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to load topic details');
+            return res.json();
+          })
+          .then(detailsJson => {
+            setDynamicDetails(detailsJson);
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error('Failed to load dynamic lesson details:', err);
+            setDynamicDetails({
+              lessonTitle: activeTopicNode.title,
+              lessonContent: `Follow this structured study guide for ${activeTopicNode.title} as part of your overall ${goal} objective. Connect core concepts and attempt the quiz to level up your mastery.`,
+              objectives: [
+                `Understand core mechanisms of ${activeTopicNode.title}`,
+                `Apply key patterns for ${activeTopicNode.title}`,
+                `Inspect logic flow of ${activeTopicNode.title}`
+              ],
+              keyConcepts: [
+                `Introductory guidelines for ${activeTopicNode.title}`,
+                `Practical validation models`
+              ],
+              codeSnippet: [
+                `// Study notes for ${activeTopicNode.title}`,
+                `console.log("Welcome to Ascend AI!");`
+              ],
+              resources: {
+                documentation: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' documentation'),
+                youtube: 'https://youtube.com/results?search_query=' + encodeURIComponent(activeTopicNode.title),
+                books: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' books'),
+                practice_platforms: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' exercises'),
+                interactive_resources: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' tutorial')
+              }
+            });
+            setLoading(false);
+          });
       })
       .catch(err => {
         console.error('Error fetching dashboard for focused session:', err);
@@ -280,18 +324,19 @@ export default function FocusedSession() {
 
   const sessionDetails = {
     topic: activeTopicNode.title,
-    title: activeMaterial.lessonTitle,
-    difficulty: 'Intermediate' as Difficulty,
+    title: dynamicDetails?.lessonTitle || activeMaterial.lessonTitle,
+    difficulty: 'Intermediate' as const,
     estimatedMinutes: 20,
     mastery: activeMastery,
     xp: 100,
     aiExplanation: dashboardData?.recommendations?.reviewTopics?.includes(activeTopicId)
       ? 'The AI Analyzer identifies previous gaps in this domain. Take time reviewing syntax logic and layout patterns.'
       : 'You are on track to master this topic! Follow the material below to solidify your mental model.',
-    objectives: activeMaterial.objectives,
-    keyConcepts: activeMaterial.keyConcepts,
-    codeSnippet: activeMaterial.codeSnippet,
-    lessonContent: activeMaterial.lessonContent,
+    objectives: dynamicDetails?.objectives || activeMaterial.objectives,
+    keyConcepts: dynamicDetails?.keyConcepts || activeMaterial.keyConcepts,
+    codeSnippet: dynamicDetails?.codeSnippet || activeMaterial.codeSnippet,
+    lessonContent: dynamicDetails?.lessonContent || activeMaterial.lessonContent,
+    resources: activeTopicNode.resources || dynamicDetails?.resources || {}
   };
 
   const markComplete = () => {
@@ -431,7 +476,7 @@ export default function FocusedSession() {
                     </h3>
                   </div>
                   <ul className="space-y-2">
-                    {sessionDetails.objectives.map((obj, i) => (
+                    {sessionDetails.objectives.map((obj: string, i: number) => (
                       <li
                         key={i}
                         className="flex items-start gap-2.5 text-sm text-slate-600"
@@ -473,6 +518,35 @@ export default function FocusedSession() {
                   </h4>
                   <CodeBlock lines={sessionDetails.codeSnippet} />
                 </div>
+
+                {sessionDetails.resources && Object.keys(sessionDetails.resources).length > 0 && (
+                  <div className="border-t border-base-600 pt-6 mt-6">
+                    <h4 className="text-base font-semibold text-slate-900 mb-3">
+                      Recommended Resources
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {Object.entries(sessionDetails.resources).map(([key, val]: any) => {
+                        if (!val) return null;
+                        const formattedKey = key.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+                        return (
+                          <a
+                            key={key}
+                            href={val.startsWith('http') ? val : `https://google.com/search?q=${encodeURIComponent(val)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3 rounded-lg border border-base-600 hover:bg-slate-50 transition-colors text-sm text-slate-700 bg-white"
+                          >
+                            <span className="font-medium">{formattedKey}</span>
+                            <span className="text-xs text-accent-600 font-semibold flex items-center gap-1">
+                              Explore
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -484,7 +558,7 @@ export default function FocusedSession() {
                 Key Concepts
               </h3>
               <ul className="space-y-3">
-                {sessionDetails.keyConcepts.map((concept, i) => (
+                {sessionDetails.keyConcepts.map((concept: string, i: number) => (
                   <li key={i} className="flex gap-2 text-sm text-slate-600 leading-relaxed">
                     <span className="text-accent-500 font-bold">•</span>
                     <span>{concept}</span>

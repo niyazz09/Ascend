@@ -105,7 +105,8 @@ function generateRoadmap({ goal, learnerState = {}, topics = [] }) {
       topicId: topic.id,
       title: topic.title,
       prerequisites: topic.prerequisites,
-      status
+      status,
+      resources: topic.resources
     });
   }
 

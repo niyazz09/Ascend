@@ -1,3 +1,5 @@
+const geminiService = require('../services/gemini');
+
 const MOCK_QUESTIONS = {
   "html-basics": [
     {
@@ -115,6 +117,50 @@ class MockQuizProvider extends QuizProvider {
   }
 }
 
+class GeminiQuizProvider extends QuizProvider {
+  async generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle }) {
+    const responseSchema = {
+      type: "OBJECT",
+      properties: {
+        questions: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              id: { type: "STRING" },
+              type: { type: "STRING", enum: ["mcq", "true_false"] },
+              question: { type: "STRING" },
+              options: { type: "ARRAY", items: { type: "STRING" } },
+              correctAnswer: { type: "STRING" },
+              explanation: { type: "STRING" }
+            },
+            required: ["id", "type", "question", "options", "correctAnswer", "explanation"]
+          }
+        }
+      },
+      required: ["questions"]
+    };
+
+    const prompt = `Generate exactly ${questionCount} multiple choice questions (mcq or true_false) for the topic "${topicTitle || topicId}" inside the curriculum of "${goalTitle || 'General Study'}".
+    The difficulty should be around ${difficulty} out of 100.
+    Ensure the options array contains the correct answer. For true_false, options must be exactly ["True", "False"].`;
+
+    try {
+      const responseText = await geminiService.generateContent({
+        prompt,
+        systemInstruction: "You are an expert exam generator for the ASCEND learning platform. Generate high-quality questions in JSON matching the schema.",
+        responseSchema
+      });
+      const parsed = JSON.parse(responseText);
+      return parsed.questions;
+    } catch (error) {
+      console.warn("GeminiQuizProvider failed, falling back to mock provider:", error.message);
+      const mock = new MockQuizProvider();
+      return mock.generateQuestions({ topicId: 'html-basics', difficulty, questionCount });
+    }
+  }
+}
+
 /**
  * Generates a structured quiz for a requested topic.
  *
@@ -122,10 +168,12 @@ class MockQuizProvider extends QuizProvider {
  * @param {string} params.topicId - Target topic
  * @param {number} params.difficulty - Target difficulty (0-100)
  * @param {number} params.questionCount - Number of questions requested
+ * @param {string} [params.topicTitle] - Topic title
+ * @param {string} [params.goalTitle] - Goal title
  * @param {QuizProvider} [provider] - Optional quiz provider implementation (defaults to MockQuizProvider)
  * @returns {Promise<Object>} Standardized quiz output
  */
-async function generateQuiz({ topicId, difficulty, questionCount }, provider = new MockQuizProvider()) {
+async function generateQuiz({ topicId, difficulty, questionCount, topicTitle, goalTitle }, provider) {
   if (!topicId || typeof topicId !== "string" || topicId.trim() === "") {
     throw new Error("Invalid topicId");
   }
@@ -136,7 +184,11 @@ async function generateQuiz({ topicId, difficulty, questionCount }, provider = n
     throw new Error("Invalid questionCount");
   }
 
-  const questions = await provider.generateQuestions({ topicId, difficulty, questionCount });
+  if (!provider) {
+    provider = process.env.GEMINI_API_KEY ? new GeminiQuizProvider() : new MockQuizProvider();
+  }
+
+  const questions = await provider.generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle });
 
   return {
     topicId,
@@ -148,5 +200,6 @@ async function generateQuiz({ topicId, difficulty, questionCount }, provider = n
 module.exports = {
   QuizProvider,
   MockQuizProvider,
+  GeminiQuizProvider,
   generateQuiz
 };
