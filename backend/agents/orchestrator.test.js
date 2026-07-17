@@ -69,7 +69,7 @@ test('Orchestrator Agent Tests', async (t) => {
     assert.deepStrictEqual(result.executedAgents, ["MasteryEngine", "AnalyzerAgent"]);
     assert.ok(result.masteryUpdate);
     assert.ok(result.analysis);
-    assert.strictEqual(result.masteryUpdate.newScore, 64.8);
+    assert.strictEqual(result.masteryUpdate.newScore, 73.64);
     assert.ok(result.analysis.summary.weakTopics.length === 0);
   });
 

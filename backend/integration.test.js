@@ -246,7 +246,7 @@ test('E2E Integration & Authentication Flow Tests', async (t) => {
     assert.strictEqual(dashboard2.stats.quizAttempts, 1);
     assert.strictEqual(dashboard2.stats.streak, 1);
     assert.strictEqual(dashboard2.mastery[0].topicId, "html-basics");
-    assert.strictEqual(dashboard2.mastery[0].score, 12);
+    assert.strictEqual(dashboard2.mastery[0].score, 15);
   });
 
   await t.test('Orchestrator Agent Flow (POST /orchestrate)', async () => {

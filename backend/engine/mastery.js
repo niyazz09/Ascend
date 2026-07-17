@@ -25,6 +25,10 @@ const DEFAULT_K = 15;
  * @param {number} [params.k=15] - Configurable K-factor for mastery update sensitivity
  * @returns {Object} Canonical mastery result and evidence record
  */
+function expectedScore(mastery, difficulty, scale = 20) {
+  return 1 / (1 + Math.pow(10, (difficulty - mastery) / scale));
+}
+
 function updateMastery({ learnerState, topicId, questionResult, k = DEFAULT_K }) {
   if (!learnerState) {
     learnerState = {};
@@ -36,13 +40,11 @@ function updateMastery({ learnerState, topicId, questionResult, k = DEFAULT_K })
   const previousScore = learnerState.mastery[topicId] !== undefined ? learnerState.mastery[topicId] : 0;
   const { difficulty, correct, questionType, timestamp } = questionResult;
 
-  // Convert mastery and difficulty to 0.0 - 1.0 scale weights
-  const expectedPerformance = previousScore / 100;
+  const expectedPerformance = expectedScore(previousScore, difficulty);
   const actualPerformance = correct ? 1 : 0;
-  const difficultyWeight = difficulty / 100;
 
-  // Calculate mastery delta using the modified Elo model
-  let delta = k * difficultyWeight * (actualPerformance - expectedPerformance);
+  // Calculate mastery delta using the new logistic expected-score model
+  let delta = k * (actualPerformance - expectedPerformance);
   delta = Math.round(delta * 100) / 100;
 
   // Clamp the new score between 0 and 100 and round to 2 decimal places

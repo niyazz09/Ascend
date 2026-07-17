@@ -320,7 +320,28 @@ export default function FocusedSession() {
     ? (dashboardData?.mastery?.find((m: any) => m.topicId === activeTopicId)?.score || 0)
     : 0;
 
-  const activeMaterial = courseMaterials[activeTopicId] || courseMaterials['html-basics'];
+  const goal = dashboardData?.roadmap?.goal || 'General';
+  const fallbackMaterial = {
+    lessonTitle: activeTopicNode.title || 'General Concepts',
+    lessonContent: `Study the fundamentals of "${activeTopicNode.title}" as part of your overall learning goal: "${goal}". Focus on core structures, best practices, and practical application parameters to build complete competence.`,
+    objectives: [
+      `Understand core mechanisms of ${activeTopicNode.title || 'this topic'}`,
+      `Apply key patterns for ${activeTopicNode.title || 'this topic'}`,
+      `Inspect logic flow of ${activeTopicNode.title || 'this topic'}`
+    ],
+    keyConcepts: [
+      `Introductory guidelines for ${activeTopicNode.title || 'this topic'}`,
+      `Practical validation models`
+    ],
+    codeSnippet: [
+      `# Study Outline for ${activeTopicNode.title || 'this topic'}`,
+      `* Focus on understanding the core concepts of ${activeTopicNode.title || 'this topic'}`,
+      `* Practice practical exercises and review recommended study resources`,
+      `* Complete the quiz to test your knowledge and gain mastery`
+    ]
+  };
+
+  const activeMaterial = courseMaterials[activeTopicId] || fallbackMaterial;
 
   const sessionDetails = {
     topic: activeTopicNode.title,

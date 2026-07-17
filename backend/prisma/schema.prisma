@@ -35,6 +35,7 @@ model Roadmap {
   goalId             String        @unique
   goal               LearningGoal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
   progressPercentage Float         @default(0.0)
+  source             String        @default("generated") // "generated" | "fallback"
   nodes              RoadmapNode[]
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -48,7 +49,7 @@ model RoadmapNode {
   title         String
   status        String   // "completed", "next", "locked"
   prerequisites String[] // Native PostgreSQL string array
-  resources     String?  // Nullable field to store serialized JSON list of recommended resources
+  resources     Json?    // Nullable field to store JSON list of recommended resources
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

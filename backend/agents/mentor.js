@@ -57,15 +57,28 @@ async function mentor({ message, history = [], goal, completedNodes = [], curren
   }
   fullPrompt += `Student: ${message}`;
 
-  try {
-    const coachResponse = await geminiService.generateContent({
-      prompt: fullPrompt,
-      systemInstruction
-    });
-    return coachResponse;
-  } catch (error) {
-    console.warn("AI Mentor call failed, using fallback coach responder:", error.message);
-    return `I am currently experiencing connection issues with my AI core, but I see you are working on "${currentNode || goal}". Keep practicing and attempting the checkpoints to build your mastery! Let me know if you want to try again.`;
+  if (!process.env.GEMINI_API_KEY) {
+    return `[Offline Fallback Mode] I'm currently running in local offline mode. I see you're studying "${currentNode || goal}". Take a look at the recommended study resources or practice questions to increase your mastery!`;
+  }
+
+  let attempts = 0;
+  const maxAttempts = 2;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    try {
+      const coachResponse = await geminiService.generateContent({
+        prompt: fullPrompt,
+        systemInstruction
+      });
+      return coachResponse;
+    } catch (error) {
+      console.warn(`Attempt ${attempts} failed for mentor:`, error.message);
+      if (attempts >= maxAttempts) {
+        console.warn("Exceeded max attempts. Returning fallback coach response.");
+        return `[AI Core Unavailable] I am currently experiencing connection issues with my AI core, but I see you are working on "${currentNode || goal}". Keep practicing and attempting the checkpoints to build your mastery!`;
+      }
+    }
   }
 }
 

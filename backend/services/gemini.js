@@ -40,11 +40,21 @@ async function generateContent({ prompt, systemInstruction, responseSchema }) {
   }
 
   const model = genAI.getGenerativeModel(modelOptions);
-  const result = await model.generateContent({
+  
+  // 15-second timeout wrapper
+  const timeoutMs = 15000;
+  const contentPromise = model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig
   });
 
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Gemini API request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  const result = await Promise.race([contentPromise, timeoutPromise]);
   return result.response.text();
 }
 

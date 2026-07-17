@@ -91,7 +91,7 @@ async function getLearner(id) {
  * @param {Object} data - Updated state data
  * @returns {Promise<Object>} Updated learner state
  */
-async function saveLearner(id, data) {
+async function saveLearner(id, data, newEvidence = []) {
   if (data.mastery) {
     for (const [topicId, score] of Object.entries(data.mastery)) {
       await prisma.mastery.upsert({
@@ -102,36 +102,29 @@ async function saveLearner(id, data) {
     }
   }
 
-  if (data.evidenceLog && data.evidenceLog.length > 0) {
-    const dbLogs = await prisma.evidenceLog.findMany({
-      where: { userId: id }
-    });
+  if (newEvidence && newEvidence.length > 0) {
+    for (const log of newEvidence) {
+      const mastery = await prisma.mastery.findUnique({
+        where: { userId_topicId: { userId: id, topicId: log.topicId } }
+      });
+      const masteryId = mastery ? mastery.id : (await prisma.mastery.create({
+        data: { userId: id, topicId: log.topicId, score: log.newScore }
+      })).id;
 
-    if (data.evidenceLog.length > dbLogs.length) {
-      const newLogs = data.evidenceLog.slice(dbLogs.length);
-      for (const log of newLogs) {
-        const mastery = await prisma.mastery.findUnique({
-          where: { userId_topicId: { userId: id, topicId: log.topicId } }
-        });
-        const masteryId = mastery ? mastery.id : (await prisma.mastery.create({
-          data: { userId: id, topicId: log.topicId, score: log.newScore }
-        })).id;
-
-        await prisma.evidenceLog.create({
-          data: {
-            userId: id,
-            masteryId,
-            topicId: log.topicId,
-            difficulty: log.difficulty,
-            correct: log.correct,
-            questionType: log.questionType,
-            delta: log.delta,
-            previousScore: log.previousScore,
-            newScore: log.newScore,
-            timestamp: new Date(log.timestamp)
-          }
-        });
-      }
+      await prisma.evidenceLog.create({
+        data: {
+          userId: id,
+          masteryId,
+          topicId: log.topicId,
+          difficulty: log.difficulty,
+          correct: log.correct,
+          questionType: log.questionType,
+          delta: log.delta,
+          previousScore: log.previousScore,
+          newScore: log.newScore,
+          timestamp: new Date(log.timestamp)
+        }
+      });
     }
   }
 

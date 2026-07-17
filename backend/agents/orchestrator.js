@@ -103,7 +103,10 @@ async function orchestrate({ userId, input, learnerState = {}, topics = [], addi
     case "learn": {
       result.executedAgents = ["PlannerAgent", "QuizGeneratorAgent", "AnalyzerAgent"];
       
-      const goal = detectedGoal || additionalParams.goal || "Frontend Developer";
+      const goal = detectedGoal || additionalParams.goal;
+      if (!goal) {
+        throw new Error("No learning goal could be detected. Please provide a learning goal.");
+      }
       
       // 1. Run Planner
       const roadmap = generateRoadmap({ goal, learnerState, topics });

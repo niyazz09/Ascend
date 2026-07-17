@@ -87,14 +87,40 @@ export default function Quiz() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Extract topicId from router state if redirected
+  // Extract topicId from router state if redirected, otherwise fetch active from dashboard
   useEffect(() => {
     const passedTopicId = location.state?.topicId;
     if (passedTopicId) {
       setTopicId(passedTopicId);
-      // Derive pretty title
       const title = passedTopicId.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
       setTopicTitle(title);
+    } else {
+      setLoading(true);
+      fetchWithAuth('/dashboard')
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to load dashboard data');
+          return res.json();
+        })
+        .then(json => {
+          const activeTopicId = json.recommendations?.nextTopic 
+            || json.roadmap?.roadmap?.[0]?.topicId;
+          
+          if (activeTopicId) {
+            setTopicId(activeTopicId);
+            const activeTopicNode = json.roadmap?.roadmap?.find((n: any) => n.topicId === activeTopicId) 
+              || json.roadmap?.roadmap?.[0]
+              || { title: 'General Concept' };
+            setTopicTitle(activeTopicNode.title);
+          } else {
+            setTopicId('html-basics');
+            setTopicTitle('HTML Basics');
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load active topic for quiz:', err);
+          setTopicId('html-basics');
+          setTopicTitle('HTML Basics');
+        });
     }
   }, [location.state]);
 
@@ -116,7 +142,21 @@ export default function Quiz() {
       if (res.ok) {
         const json = await res.json();
         if (json && json.questions && json.questions.length > 0) {
-          setQuestions(json.questions);
+          const mappedQuestions = json.questions.map((q: any) => {
+            const options = q.options || [];
+            let correctIndex = q.correctIndex;
+            if (correctIndex === undefined && q.correctAnswer !== undefined) {
+              correctIndex = options.indexOf(q.correctAnswer);
+            }
+            if (correctIndex === -1 || correctIndex === undefined) {
+              correctIndex = 0;
+            }
+            return {
+              ...q,
+              correctIndex
+            };
+          });
+          setQuestions(mappedQuestions);
         } else {
           throw new Error('No questions returned for this topic.');
         }

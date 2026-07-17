@@ -58,6 +58,12 @@ function validateTopics(topics) {
   return true;
 }
 
+function cleanGoal(goal) {
+  let clean = goal.replace(/^(learn|study|how to|getting started with|basics of|mastering|introduction to)\s+/i, '');
+  clean = clean.trim();
+  return clean.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
+
 function getOfflineFallbackTopics(goal) {
   const g = goal.toLowerCase();
   
@@ -113,12 +119,25 @@ function getOfflineFallbackTopics(goal) {
     ];
   }
 
+  if (g.includes('frontend') || g.includes('developer') || g.includes('web') || g.includes('programming') || g.includes('javascript') || g.includes('html') || g.includes('css')) {
+    return [
+      { id: "html-basics", title: "HTML Basics & Document Structure", prerequisites: [] },
+      { id: "css-basics", title: "CSS Basics & Layout Styling", prerequisites: ["html-basics"] },
+      { id: "javascript-basics", title: "JavaScript Basics & Dynamic Scripting", prerequisites: ["css-basics"] },
+      { id: "web-apis", title: "Web APIs & Asynchronous HTTP Fetching", prerequisites: ["javascript-basics"] },
+      { id: "dom-manipulation", title: "DOM Manipulation & User Interaction Events", prerequisites: ["javascript-basics"] }
+    ];
+  }
+
+  const name = cleanGoal(goal);
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || "goal";
   return [
-    { id: "html-basics", title: "HTML Basics & Document Structure", prerequisites: [] },
-    { id: "css-basics", title: "CSS Basics & Layout Styling", prerequisites: ["html-basics"] },
-    { id: "javascript-basics", title: "JavaScript Basics & Dynamic Scripting", prerequisites: ["css-basics"] },
-    { id: "web-apis", title: "Web APIs & Asynchronous HTTP Fetching", prerequisites: ["javascript-basics"] },
-    { id: "dom-manipulation", title: "DOM Manipulation & User Interaction Events", prerequisites: ["javascript-basics"] }
+    { id: `${slug}-intro`, title: `Introduction to ${name}`, prerequisites: [] },
+    { id: `${slug}-core`, title: `Core Concepts of ${name}`, prerequisites: [`${slug}-intro`] },
+    { id: `${slug}-tools`, title: `Essential Tools & Techniques`, prerequisites: [`${slug}-core`] },
+    { id: `${slug}-practice`, title: `Practical Applications & Exercises`, prerequisites: [`${slug}-tools`] },
+    { id: `${slug}-strategies`, title: `Intermediate & Advanced Strategies`, prerequisites: [`${slug}-practice`] },
+    { id: `${slug}-projects`, title: `Real-world Projects & Capstone`, prerequisites: [`${slug}-strategies`] }
   ];
 }
 
@@ -169,12 +188,21 @@ function getOfflineFallbackMetadata(goal) {
       recommendedStyle: "Chronological narrative reading"
     };
   }
+  if (g.includes('frontend') || g.includes('developer') || g.includes('web') || g.includes('programming') || g.includes('javascript') || g.includes('html') || g.includes('css')) {
+    return {
+      category: "Programming",
+      domain: "Web Development",
+      difficulty: "Beginner",
+      estimatedDuration: "2 months",
+      recommendedStyle: "Project-based learning"
+    };
+  }
   return {
-    category: "Programming",
-    domain: "Web Development",
+    category: "Professional Certifications",
+    domain: "General Studies",
     difficulty: "Beginner",
-    estimatedDuration: "2 months",
-    recommendedStyle: "Project-based learning"
+    estimatedDuration: "1 month",
+    recommendedStyle: "Structured milestones review"
   };
 }
 
@@ -285,8 +313,7 @@ async function analyzeGoal({ goal }) {
     throw new Error("Invalid learning goal");
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn("GEMINI_API_KEY environment variable is missing. Running in local fallback mode.");
+  const runFallback = () => {
     const customTopics = getOfflineFallbackTopics(goal);
     const meta = getOfflineFallbackMetadata(goal);
     const enrichedTopics = customTopics.map(topic => ({
@@ -307,57 +334,69 @@ async function analyzeGoal({ goal }) {
       estimatedDuration: meta.estimatedDuration,
       prerequisites: [],
       recommendedStyle: meta.recommendedStyle,
-      topics: enrichedTopics
+      topics: enrichedTopics,
+      source: "fallback"
     };
+  };
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn("GEMINI_API_KEY environment variable is missing. Running in local fallback mode.");
+    return runFallback();
   }
 
-  const basePrompt = `Analyze the learning goal: "${goal}".
-  Deconstruct it into a structured learning path with between 4 and 8 topics.
-  Map logical prerequisites between these topics. Ensure that:
-  1. Every prerequisite ID matches one of the topic IDs in your topics array.
-  2. There are absolutely no circular dependencies (e.g. Topic A depending on Topic B, while Topic B depends on Topic A).
-  3. The topic IDs should be short, URL-friendly kebab-case strings.`;
+  try {
+    const basePrompt = `Analyze the learning goal: "${goal}".
+    Deconstruct it into a structured learning path with between 4 and 8 topics.
+    Map logical prerequisites between these topics. Ensure that:
+    1. Every prerequisite ID matches one of the topic IDs in your topics array.
+    2. There are absolutely no circular dependencies (e.g. Topic A depending on Topic B, while Topic B depends on Topic A).
+    3. The topic IDs should be short, URL-friendly kebab-case strings.`;
 
-  let prompt = basePrompt;
-  let attempts = 0;
-  const maxAttempts = 2;
+    let prompt = basePrompt;
+    let attempts = 0;
+    const maxAttempts = 2;
 
-  while (attempts < maxAttempts) {
-    attempts++;
-    try {
-      const responseText = await geminiService.generateContent({
-        prompt,
-        systemInstruction: "You are the ASCEND Learning Goal Analyzer. Your role is to deconstruct any learning goal into a highly structured, valid curriculum DAG (Directed Acyclic Graph) formatted in JSON matching the requested schema.",
-        responseSchema: analyzerResponseSchema
-      });
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        const responseText = await geminiService.generateContent({
+          prompt,
+          systemInstruction: "You are the ASCEND Learning Goal Analyzer. Your role is to deconstruct any learning goal into a highly structured, valid curriculum DAG (Directed Acyclic Graph) formatted in JSON matching the requested schema.",
+          responseSchema: analyzerResponseSchema
+        });
 
-      const cleanedJson = repairJson(responseText);
-      const parsed = JSON.parse(cleanedJson);
+        const cleanedJson = repairJson(responseText);
+        const parsed = JSON.parse(cleanedJson);
 
-      // Validate structure and prerequisite connections
-      if (validateTopics(parsed.topics)) {
-        return parsed;
+        if (validateTopics(parsed.topics)) {
+          parsed.source = "generated";
+          return parsed;
+        }
+
+        console.warn(`Attempt ${attempts} generated invalid prerequisites/topics. Retrying...`);
+        prompt = `${basePrompt}
+        
+        WARNING: Your previous attempt failed validation (either there were cyclic prerequisites or missing topic IDs).
+        Please ensure all prerequisite IDs exist in the topics list, and that there are absolutely no loops/cycles.`;
+        
+      } catch (error) {
+        console.warn(`Attempt ${attempts} failed to generate or parse roadmap:`, error.message);
+        if (attempts >= maxAttempts) {
+          console.warn("Exceeded max attempts. Falling back to structured fallback roadmap.");
+          return runFallback();
+        }
+        prompt = `${basePrompt}
+        
+        WARNING: The previous attempt threw a parsing or generation error: "${error.message}". Please ensure valid JSON formatting.`;
       }
-
-      console.warn(`Attempt ${attempts} generated invalid prerequisites/topics. Retrying...`);
-      // Update prompt for retry with stricter warnings
-      prompt = `${basePrompt}
-      
-      WARNING: Your previous attempt failed validation (either there were cyclic prerequisites or missing topic IDs).
-      Please ensure all prerequisite IDs exist in the topics list, and that there are absolutely no loops/cycles.`;
-      
-    } catch (error) {
-      console.warn(`Attempt ${attempts} failed to generate or parse roadmap:`, error.message);
-      if (attempts >= maxAttempts) {
-        throw new Error(`Failed to generate a valid roadmap after ${maxAttempts} attempts.`);
-      }
-      prompt = `${basePrompt}
-      
-      WARNING: The previous attempt threw a parsing or generation error: "${error.message}". Please ensure valid JSON formatting.`;
     }
-  }
 
-  throw new Error("Roadmap generation failed validation.");
+    console.warn("Roadmap validation failed after all attempts. Falling back to structured fallback roadmap.");
+    return runFallback();
+  } catch (globalError) {
+    console.warn("Gemini service failed globally. Falling back to structured fallback roadmap:", globalError.message);
+    return runFallback();
+  }
 }
 
 module.exports = {

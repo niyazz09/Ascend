@@ -28,6 +28,7 @@ router.post('/', authenticateToken, async (req, res) => {
       learnerState: learner, 
       topics: analyzed.topics 
     });
+    roadmap.source = analyzed.source || "generated";
 
     if (!roadmap.roadmap || roadmap.roadmap.length === 0) {
       return res.json(roadmap);
@@ -44,7 +45,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const dbRoadmap = await prisma.roadmap.create({
       data: {
         goalId: dbGoal.id,
-        progressPercentage: roadmap.progressPercentage
+        progressPercentage: roadmap.progressPercentage,
+        source: roadmap.source
       }
     });
 
@@ -56,7 +58,7 @@ router.post('/', authenticateToken, async (req, res) => {
           title: node.title,
           status: node.status,
           prerequisites: node.prerequisites,
-          resources: node.resources ? JSON.stringify(node.resources) : null
+          resources: node.resources || null
         }
       });
     }
@@ -118,13 +120,65 @@ router.get('/topic-details', authenticateToken, async (req, res) => {
     const prompt = `Generate comprehensive study notes, lessons, and highly relevant learning resources for the topic "${topicTitle}" within the curriculum of learning goal "${goal}".
     Make sure codeSnippet is a string array where each item is a line of code (if applicable to the domain, otherwise show key bulleted examples or guidelines).`;
 
-    const responseText = await geminiService.generateContent({
-      prompt,
-      systemInstruction: "You are the ASCEND Curriculum Details Generator. Provide highly detailed lesson content and resource links (documentation, youtube, books, practice_platforms, interactive_resources) in JSON format matching the requested schema.",
-      responseSchema
-    });
+    let responseText;
+    let attempts = 0;
+    const maxAttempts = 2;
+    let source = "generated";
+    let parsed = null;
 
-    const parsed = JSON.parse(responseText);
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn("GEMINI_API_KEY environment variable is missing. Running in local fallback mode.");
+      attempts = maxAttempts;
+    }
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        responseText = await geminiService.generateContent({
+          prompt,
+          systemInstruction: "You are the ASCEND Curriculum Details Generator. Provide highly detailed lesson content and resource links (documentation, youtube, books, practice_platforms, interactive_resources) in JSON format matching the requested schema.",
+          responseSchema
+        });
+        parsed = JSON.parse(responseText);
+        source = "generated";
+        break;
+      } catch (err) {
+        console.warn(`Attempt ${attempts} failed for topic details:`, err.message);
+        if (attempts >= maxAttempts) {
+          console.warn("Exceeded max attempts. Falling back to dynamic topic details fallback.");
+        }
+      }
+    }
+
+    if (!parsed) {
+      source = "fallback";
+      parsed = {
+        lessonTitle: topicTitle,
+        lessonContent: `Follow this structured study guide for ${topicTitle} as part of your overall ${goal} objective. Connect core concepts and attempt the quiz to level up your mastery.`,
+        objectives: [
+          `Understand core mechanisms of ${topicTitle}`,
+          `Apply key patterns for ${topicTitle}`,
+          `Inspect logic flow of ${topicTitle}`
+        ],
+        keyConcepts: [
+          `Introductory guidelines for ${topicTitle}`,
+          `Practical validation models`
+        ],
+        codeSnippet: [
+          `// Study notes for ${topicTitle}`,
+          `console.log("Welcome to Ascend!");`
+        ],
+        resources: {
+          documentation: 'https://google.com/search?q=' + encodeURIComponent(topicTitle + ' documentation'),
+          youtube: 'https://youtube.com/results?search_query=' + encodeURIComponent(topicTitle),
+          books: 'https://google.com/search?q=' + encodeURIComponent(topicTitle + ' books'),
+          practice_platforms: 'https://google.com/search?q=' + encodeURIComponent(topicTitle + ' exercises'),
+          interactive_resources: 'https://google.com/search?q=' + encodeURIComponent(topicTitle + ' tutorial')
+        }
+      };
+    }
+
+    parsed.source = source;
     res.json(parsed);
   } catch (error) {
     res.status(500).json({ error: error.message });

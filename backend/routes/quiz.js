@@ -65,7 +65,7 @@ async function submitHandler(req, res) {
       learner.evidenceLog = [];
     }
     learner.evidenceLog.push(result.evidence);
-    await saveLearner(userId, learner);
+    await saveLearner(userId, learner, [result.evidence]);
 
     res.json(result);
   } catch (error) {

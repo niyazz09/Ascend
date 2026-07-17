@@ -38,7 +38,7 @@ router.post('/', authenticateToken, async (req, res) => {
       }
       updatedLearner.evidenceLog.push(result.masteryUpdate.evidence);
 
-      await saveLearner(userId, updatedLearner);
+      await saveLearner(userId, updatedLearner, [result.masteryUpdate.evidence]);
     }
 
     res.json(result);

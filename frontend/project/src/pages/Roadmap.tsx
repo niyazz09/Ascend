@@ -691,6 +691,11 @@ export default function Roadmap() {
         </div>
       ) : (
         <>
+          {data.roadmap?.source === 'fallback' && (
+            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50/70 px-4 py-3 text-[13px] text-amber-800 flex items-center gap-2 font-medium">
+              <span>⚠ AI planner is temporarily unavailable. A generic learning roadmap has been generated.</span>
+            </div>
+          )}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

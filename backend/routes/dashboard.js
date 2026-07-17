@@ -97,12 +97,13 @@ router.get('/', authenticateToken, async (req, res) => {
     const formattedRoadmap = roadmapData
       ? {
           goal: latestGoal.title,
+          source: roadmapData.source || "generated",
           roadmap: roadmapNodes.map(node => ({
             topicId: node.topicId,
             title: node.title,
             prerequisites: node.prerequisites,
             status: node.status,
-            resources: node.resources ? JSON.parse(node.resources) : null
+            resources: node.resources || null
           })),
           completedTopics: roadmapNodes.filter(n => n.status === "completed").map(n => n.topicId),
           remainingTopics: roadmapNodes.filter(n => n.status !== "completed").map(n => n.topicId),
@@ -111,6 +112,7 @@ router.get('/', authenticateToken, async (req, res) => {
         }
       : {
           goal: "",
+          source: "generated",
           roadmap: [],
           completedTopics: [],
           remainingTopics: [],

@@ -124,6 +124,7 @@ class MockQuizProvider extends QuizProvider {
           explanation: original.explanation
         });
       }
+      results.source = "curated";
       return results;
     }
 
@@ -154,6 +155,7 @@ class MockQuizProvider extends QuizProvider {
         });
       }
     }
+    results.source = "template";
     return results;
   }
 }
@@ -186,19 +188,36 @@ class GeminiQuizProvider extends QuizProvider {
     The difficulty should be around ${difficulty} out of 100.
     Ensure the options array contains the correct answer. For true_false, options must be exactly ["True", "False"].`;
 
-    try {
-      const responseText = await geminiService.generateContent({
-        prompt,
-        systemInstruction: "You are an expert exam generator for the ASCEND learning platform. Generate high-quality questions in JSON matching the schema.",
-        responseSchema
-      });
-      const parsed = JSON.parse(responseText);
-      return parsed.questions;
-    } catch (error) {
-      console.warn("GeminiQuizProvider failed, falling back to mock provider:", error.message);
-      const mock = new MockQuizProvider();
-      return mock.generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle });
+    let attempts = 0;
+    const maxAttempts = 2;
+
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn("GEMINI_API_KEY environment variable is missing. Falling back to mock provider directly.");
+      attempts = maxAttempts;
     }
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        const responseText = await geminiService.generateContent({
+          prompt,
+          systemInstruction: "You are an expert exam generator for the ASCEND learning platform. Generate high-quality questions in JSON matching the schema.",
+          responseSchema
+        });
+        const parsed = JSON.parse(responseText);
+        const questions = parsed.questions || [];
+        questions.source = "generated";
+        return questions;
+      } catch (error) {
+        console.warn(`Attempt ${attempts} failed for GeminiQuizProvider:`, error.message);
+        if (attempts >= maxAttempts) {
+          console.warn("Exceeded max attempts. Falling back to MockQuizProvider.");
+        }
+      }
+    }
+
+    const mock = new MockQuizProvider();
+    return mock.generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle });
   }
 }
 
@@ -230,11 +249,13 @@ async function generateQuiz({ topicId, difficulty, questionCount, topicTitle, go
   }
 
   const questions = await provider.generateQuestions({ topicId, difficulty, questionCount, topicTitle, goalTitle });
+  const source = questions.source || "template";
 
   return {
     topicId,
     difficulty,
-    questions
+    questions,
+    source
   };
 }
 
