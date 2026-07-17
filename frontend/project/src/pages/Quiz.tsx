@@ -85,6 +85,7 @@ export default function Quiz() {
   const [answers, setAnswers] = useState<any[]>([]);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Extract topicId from router state if redirected
   useEffect(() => {
@@ -100,6 +101,7 @@ export default function Quiz() {
   // Load quiz from backend
   const loadQuiz = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetchWithAuth('/quiz', {
         method: 'POST',
@@ -112,13 +114,19 @@ export default function Quiz() {
       });
 
       if (res.ok) {
-        const json = await res.ok ? await res.json() : null;
-        if (json && json.questions) {
+        const json = await res.json();
+        if (json && json.questions && json.questions.length > 0) {
           setQuestions(json.questions);
+        } else {
+          throw new Error('No questions returned for this topic.');
         }
+      } else {
+        const errJson = await res.json();
+        throw new Error(errJson.error || 'Failed to load quiz checkpoint questions.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load quiz:', err);
+      setError(err.message || 'Error communicating with quiz service.');
     } finally {
       setLoading(false);
     }
@@ -237,6 +245,22 @@ export default function Quiz() {
       <div className="min-h-screen flex items-center justify-center bg-base-900">
         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageLayout title="Adaptive Checkpoint" description="Probes your active understanding.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6 border-rose-200 bg-rose-50/20">
+            <h2 className="text-lg font-semibold text-danger-600">Failed to generate Quiz</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
+            <button onClick={loadQuiz} className="btn-primary mx-auto">
+              Retry Load
+            </button>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 

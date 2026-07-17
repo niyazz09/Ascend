@@ -46,28 +46,46 @@ export default function Analysis() {
   const navigate = useNavigate();
   const { fetchWithAuth } = useAuth();
   const [data, setData] = useState<any>(null);
+  const [analysisData, setAnalysisData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchWithAuth('/dashboard')
-      .then(res => res.json())
-      .then(json => {
-        setData(json);
-        if (json.roadmap && json.roadmap.roadmap && json.roadmap.roadmap.length > 0) {
-          const firstActive = json.roadmap.roadmap.find((n: any) => n.status !== 'locked') || json.roadmap.roadmap[0];
+  const fetchAllData = () => {
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      fetchWithAuth('/dashboard').then(res => {
+        if (!res.ok) throw new Error('Failed to fetch dashboard data');
+        return res.json();
+      }),
+      fetchWithAuth('/analysis').then(res => {
+        if (!res.ok) throw new Error('Failed to fetch analyzer feedback');
+        return res.json();
+      })
+    ])
+      .then(([dash, analysis]) => {
+        setData(dash);
+        setAnalysisData(analysis);
+        if (dash.roadmap && dash.roadmap.roadmap && dash.roadmap.roadmap.length > 0) {
+          const firstActive = dash.roadmap.roadmap.find((n: any) => n.status !== 'locked') || dash.roadmap.roadmap[0];
           setActiveId(firstActive.topicId);
         }
         setLoading(false);
       })
       .catch(err => {
-        console.error('Failed to load analysis:', err);
+        console.error('Failed to load analysis details:', err);
+        setError(err.message || 'Connection error to the analytics service.');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchAllData();
   }, []);
 
   const formattedAnalysis = useMemo(() => {
-    if (!data || !data.roadmap || !data.roadmap.roadmap) return [];
+    if (!data || !data.roadmap || !data.roadmap.roadmap || !analysisData) return [];
 
     return data.roadmap.roadmap
       .filter((node: any) => {
@@ -81,16 +99,28 @@ export default function Analysis() {
         const topicLogs = data.recentEvidence.filter((e: any) => e.topicId === node.topicId);
         const lastAttempt = topicLogs.length > 0 ? topicLogs[0].timestamp : Date.now();
 
-        // Conceptual strengths and weak areas
-        const strongAreas = score >= 80 
-          ? [`Familiarity with basic ${node.title} tags`, `Correct structuring of elements`, `Mastery of semantic hierarchy`]
-          : score >= 60
-          ? [`Familiarity with basic ${node.title} tags`, `Constructive logic flows`]
-          : [`Familiarity with foundational terms`];
+        // Conceptual strengths and weak areas from backend recommendations
+        const isWeak = analysisData.summary.weakTopics.includes(node.topicId);
+        const isStrong = analysisData.summary.strongTopics.includes(node.topicId);
+        const isReview = analysisData.recommendations.reviewTopics.includes(node.topicId);
 
-        const weakAreas = score < 80 
-          ? [`Retain ${node.title} rules`, `Review corner scenarios`, `Avoid precision gaps under timed quiz environments`]
-          : [];
+        const strongAreas = isStrong 
+          ? [`Excellent ${node.title} retention`, `Accurate mental model of core tags`, `Proper hierarchy implementation`]
+          : score >= 60
+          ? [`Good grasp of basic ${node.title} elements`, `Constructive logic flows`]
+          : [`Developing basic ${node.title} familiarity`];
+
+        const weakAreas = [];
+        if (isWeak) {
+          weakAreas.push(`Fails to isolate ${node.title} concepts`);
+          weakAreas.push(`Prerequisite alignment has conceptual opportunities`);
+        }
+        if (isReview) {
+          weakAreas.push(`Declining retention rate (consecutive negative deltas)`);
+        }
+        if (score < 80 && weakAreas.length === 0) {
+          weakAreas.push(`Peeling away basic syntax layers under pressure`);
+        }
 
         return {
           id: node.topicId,
@@ -102,7 +132,7 @@ export default function Analysis() {
           strongAreas,
         };
       });
-  }, [data]);
+  }, [data, analysisData]);
 
   const active = useMemo(() => {
     if (formattedAnalysis.length === 0) return null;
@@ -114,6 +144,22 @@ export default function Analysis() {
       <div className="min-h-screen flex items-center justify-center bg-base-900">
         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageLayout title="Performance Analysis" description="Insights into your strengths and gaps.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6 border-rose-200 bg-rose-50/20">
+            <h2 className="text-lg font-semibold text-danger-600">Failed to load analytics</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
+            <button onClick={fetchAllData} className="btn-primary mx-auto">
+              Retry Load
+            </button>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 

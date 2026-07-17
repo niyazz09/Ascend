@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowRight, Check } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import PasswordField, { TextField } from '../components/auth/PasswordField';
-import GoogleButton from '../components/auth/GoogleButton';
 import { useAuth } from '../context/AuthContext';
 
 interface Strength {
@@ -53,7 +52,6 @@ export default function SignUp() {
     form?: string;
   }>({});
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const strength = strengthFor(password);
 
@@ -85,14 +83,6 @@ export default function SignUp() {
     navigate('/dashboard');
   };
 
-  const onGoogle = () => {
-    setGoogleLoading(true);
-    setTimeout(() => {
-      setGoogleLoading(false);
-      navigate('/login');
-    }, 1200);
-  };
-
   const onPasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
@@ -120,16 +110,6 @@ export default function SignUp() {
             {errors.form}
           </div>
         )}
-        <GoogleButton onClick={onGoogle} loading={googleLoading} />
-
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-base-600" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-3 text-slate-400">or</span>
-          </div>
-        </div>
 
         <TextField
           id="name"

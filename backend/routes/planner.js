@@ -20,6 +20,10 @@ router.post('/', authenticateToken, async (req, res) => {
 
     const roadmap = generateRoadmap({ goal, learnerState: learner, topics });
 
+    if (roadmap.message === "Unknown goal" || !roadmap.roadmap || roadmap.roadmap.length === 0) {
+      return res.json(roadmap);
+    }
+
     // Persist goal, roadmap, and nodes in database
     const dbGoal = await prisma.learningGoal.create({
       data: {

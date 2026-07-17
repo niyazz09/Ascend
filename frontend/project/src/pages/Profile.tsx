@@ -45,18 +45,29 @@ export default function Profile() {
   const { user, fetchWithAuth } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchProfile = () => {
+    setLoading(true);
+    setError(null);
     fetchWithAuth('/dashboard')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load profile details');
+        return res.json();
+      })
       .then(json => {
         setData(json);
         setLoading(false);
       })
       .catch(err => {
         console.error('Failed to load profile stats:', err);
+        setError(err.message || 'Error communicating with server.');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
   const name = user?.name || user?.email.split('@')[0] || 'Learner';
@@ -68,7 +79,7 @@ export default function Profile() {
     .slice(0, 2)
     .toUpperCase();
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-900">
         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
@@ -76,10 +87,26 @@ export default function Profile() {
     );
   }
 
-  const level = data.stats.completedTopics + 1;
-  const xp = data.stats.completedTopics * 100;
-  const streak = data.stats.streak;
-  const mastery = `${data.stats.overallProgress}%`;
+  if (error) {
+    return (
+      <PageLayout title="Profile" description="Your account and learning identity.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6 border-rose-200 bg-rose-50/20">
+            <h2 className="text-lg font-semibold text-danger-600">Failed to load Profile</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
+            <button onClick={fetchProfile} className="btn-primary mx-auto">
+              Retry Load
+            </button>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const level = data?.stats?.completedTopics + 1 || 1;
+  const xp = (data?.stats?.completedTopics || 0) * 100;
+  const streak = data?.stats?.streak || 0;
+  const mastery = `${data?.stats?.overallProgress || 0}%`;
 
   return (
     <PageLayout title="Profile" description="Your account and learning identity.">
@@ -145,19 +172,13 @@ export default function Profile() {
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2.5 border-b border-base-600">
-              <span className="text-sm text-slate-500">Member since</span>
-              <span className="text-sm font-medium text-slate-900">
-                July 2026
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-2.5 border-b border-base-600">
               <span className="text-sm text-slate-500">Plan</span>
               <span className="text-sm font-medium text-slate-900">Free</span>
             </div>
             <div className="flex items-center justify-between py-2.5">
               <span className="text-sm text-slate-500">Account ID</span>
               <span className="text-sm font-mono text-slate-600 truncate max-w-[200px]">
-                {user?.id?.slice(0, 8) || 'u_001'}
+                {user?.id || 'u_001'}
               </span>
             </div>
           </div>

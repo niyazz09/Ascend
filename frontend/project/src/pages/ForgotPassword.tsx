@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import { TextField } from '../components/auth/PasswordField';
-import GoogleButton from '../components/auth/GoogleButton';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -95,16 +94,6 @@ export default function ForgotPassword() {
       }
     >
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
-        <GoogleButton label="Continue with Google" disabled />
-
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-base-600" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-3 text-slate-400">or</span>
-          </div>
-        </div>
 
         <TextField
           id="email"

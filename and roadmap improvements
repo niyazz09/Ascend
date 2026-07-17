@@ -1,0 +1,1068 @@
+warning: in the working copy of 'backend/routes/planner.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/context/AuthContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/index.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Analysis.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Dashboard.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/FocusedSession.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/ForgotPassword.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Notifications.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Profile.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Quiz.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Roadmap.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/Settings.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/project/src/pages/SignUp.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/backend/routes/planner.js b/backend/routes/planner.js[m
+[1mindex 4955988..f831103 100644[m
+[1m--- a/backend/routes/planner.js[m
+[1m+++ b/backend/routes/planner.js[m
+[36m@@ -20,6 +20,10 @@[m [mrouter.post('/', authenticateToken, async (req, res) => {[m
+ [m
+     const roadmap = generateRoadmap({ goal, learnerState: learner, topics });[m
+ [m
+[32m+[m[32m    if (roadmap.message === "Unknown goal" || !roadmap.roadmap || roadmap.roadmap.length === 0) {[m
+[32m+[m[32m      return res.json(roadmap);[m
+[32m+[m[32m    }[m
+[32m+[m
+     // Persist goal, roadmap, and nodes in database[m
+     const dbGoal = await prisma.learningGoal.create({[m
+       data: {[m
+[1mdiff --git a/frontend/project/src/App.tsx b/frontend/project/src/App.tsx[m
+[1mindex 0d3b58a..f0500fe 100644[m
+[1m--- a/frontend/project/src/App.tsx[m
+[1m+++ b/frontend/project/src/App.tsx[m
+[36m@@ -1,5 +1,6 @@[m
+ import { BrowserRouter, Routes, Route } from 'react-router-dom';[m
+ import { AuthProvider } from './context/AuthContext';[m
+[32m+[m[32mimport { ThemeProvider } from './context/ThemeContext';[m
+ import ProtectedRoute from './components/ProtectedRoute';[m
+ import AppLayout from './components/layout/AppLayout';[m
+ import Landing from './pages/Landing';[m
+[36m@@ -18,7 +19,8 @@[m [mimport ResetPassword from './pages/ResetPassword';[m
+ [m
+ export default function App() {[m
+   return ([m
+[31m-    <AuthProvider>[m
+[32m+[m[32m    <ThemeProvider>[m
+[32m+[m[32m      <AuthProvider>[m
+       <BrowserRouter>[m
+         <Routes>[m
+           <Route path="/" element={<Landing />} />[m
+[36m@@ -41,5 +43,6 @@[m [mexport default function App() {[m
+         </Routes>[m
+       </BrowserRouter>[m
+     </AuthProvider>[m
+[32m+[m[32m    </ThemeProvider>[m
+   );[m
+ }[m
+[1mdiff --git a/frontend/project/src/context/AuthContext.tsx b/frontend/project/src/context/AuthContext.tsx[m
+[1mindex 7c0845c..8c338ea 100644[m
+[1m--- a/frontend/project/src/context/AuthContext.tsx[m
+[1m+++ b/frontend/project/src/context/AuthContext.tsx[m
+[36m@@ -29,6 +29,7 @@[m [minterface AuthContextValue {[m
+   ) => Promise<{ error: string | null }>;[m
+   signOut: () => Promise<void>;[m
+   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;[m
+[32m+[m[32m  updateProfile: (name: string) => Promise<void>;[m
+ }[m
+ [m
+ const AuthContext = createContext<AuthContextValue | undefined>(undefined);[m
+[36m@@ -116,13 +117,38 @@[m [mexport function AuthProvider({ children }: { children: ReactNode }) {[m
+     setSession(null);[m
+   };[m
+ [m
+[32m+[m[32m  const updateProfile = async (newName: string) => {[m
+[32m+[m[32m    if (session) {[m
+[32m+[m[32m      const updatedSession = {[m
+[32m+[m[32m        ...session,[m
+[32m+[m[32m        user: {[m
+[32m+[m[32m          ...session.user,[m
+[32m+[m[32m          name: newName,[m
+[32m+[m[32m        },[m
+[32m+[m[32m      };[m
+[32m+[m[32m      localStorage.setItem('ascend_session', JSON.stringify(updatedSession));[m
+[32m+[m[32m      setSession(updatedSession);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+   const fetchWithAuth = async (url: string, options: RequestInit = {}) => {[m
+     const headers = {[m
+       ...(options.headers || {}),[m
+     } as Record<string, string>;[m
+ [m
+[31m-    if (session?.token) {[m
+[31m-      headers['Authorization'] = `Bearer ${session.token}`;[m
+[32m+[m[32m    let token = session?.token;[m
+[32m+[m[32m    if (!token) {[m
+[32m+[m[32m      const stored = localStorage.getItem('ascend_session');[m
+[32m+[m[32m      if (stored) {[m
+[32m+[m[32m        try {[m
+[32m+[m[32m          const parsed = JSON.parse(stored);[m
+[32m+[m[32m          token = parsed.token;[m
+[32m+[m[32m        } catch (e) {}[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (token) {[m
+[32m+[m[32m      headers['Authorization'] = `Bearer ${token}`;[m
+     }[m
+ [m
+     const res = await fetch(url.startsWith('http') ? url : `${API_BASE_URL}${url}`, {[m
+[36m@@ -132,6 +158,7 @@[m [mexport function AuthProvider({ children }: { children: ReactNode }) {[m
+ [m
+     if (res.status === 401 || res.status === 403) {[m
+       await signOut();[m
+[32m+[m[32m      window.location.href = '/login';[m
+     }[m
+ [m
+     return res;[m
+[36m@@ -147,6 +174,7 @@[m [mexport function AuthProvider({ children }: { children: ReactNode }) {[m
+         signUp,[m
+         signOut,[m
+         fetchWithAuth,[m
+[32m+[m[32m        updateProfile,[m
+       }}[m
+     >[m
+       {children}[m
+[1mdiff --git a/frontend/project/src/index.css b/frontend/project/src/index.css[m
+[1mindex 62724bf..70c2281 100644[m
+[1m--- a/frontend/project/src/index.css[m
+[1m+++ b/frontend/project/src/index.css[m
+[36m@@ -45,3 +45,98 @@[m
+     @apply inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md border;[m
+   }[m
+ }[m
+[32m+[m
+[32m+[m[32mhtml.dark {[m
+[32m+[m[32m  color-scheme: dark;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mhtml.dark body {[m
+[32m+[m[32m  background-color: #0f172a !important; /* bg-slate-900 */[m
+[32m+[m[32m  color: #cbd5e1 !important; /* text-slate-300 */[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Override base elements */[m
+[32m+[m[32mhtml.dark * {[m
+[32m+[m[32m  border-color: #334155 !important; /* slate-700 */[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Card overrides */[m
+[32m+[m[32mhtml.dark .card {[m
+[32m+[m[32m  background-color: #1e293b !important; /* bg-slate-800 */[m
+[32m+[m[32m  border-color: #334155 !important;[m
+[32m+[m[32m  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.4) !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Input overrides */[m
+[32m+[m[32mhtml.dark .input,[m
+[32m+[m[32mhtml.dark input[type="text"],[m
+[32m+[m[32mhtml.dark input[type="email"],[m
+[32m+[m[32mhtml.dark input[type="password"] {[m
+[32m+[m[32m  background-color: #1e293b !important;[m
+[32m+[m[32m  border-color: #334155 !important;[m
+[32m+[m[32m  color: #f8fafc !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Text color overrides */[m
+[32m+[m[32mhtml.dark .text-slate-900 {[m
+[32m+[m[32m  color: #f8fafc !important; /* slate-50 */[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .text-slate-700 {[m
+[32m+[m[32m  color: #cbd5e1 !important; /* slate-300 */[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .text-slate-600 {[m
+[32m+[m[32m  color: #94a3b8 !important; /* slate-400 */[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .text-slate-500 {[m
+[32m+[m[32m  color: #94a3b8 !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Background overrides */[m
+[32m+[m[32mhtml.dark .bg-white {[m
+[32m+[m[32m  background-color: #1e293b !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .bg-slate-50 {[m
+[32m+[m[32m  background-color: #0f172a !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .bg-slate-100 {[m
+[32m+[m[32m  background-color: #334155 !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Button secondary overrides */[m
+[32m+[m[32mhtml.dark .btn-secondary {[m
+[32m+[m[32m  background-color: #1e293b !important;[m
+[32m+[m[32m  color: #cbd5e1 !important;[m
+[32m+[m[32m  border-color: #334155 !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .btn-secondary:hover {[m
+[32m+[m[32m  background-color: #334155 !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Badge overrides */[m
+[32m+[m[32mhtml.dark .badge {[m
+[32m+[m[32m  border-color: #334155 !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Custom backgrounds and highlights */[m
+[32m+[m[32mhtml.dark .bg-accent-50 {[m
+[32m+[m[32m  background-color: rgba(37, 99, 235, 0.15) !important; /* semi-transparent accent */[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .text-accent-700 {[m
+[32m+[m[32m  color: #60a5fa !important; /* lighter accent text */[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .text-accent-600 {[m
+[32m+[m[32m  color: #3b82f6 !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .bg-success-50 {[m
+[32m+[m[32m  background-color: rgba(34, 197, 94, 0.15) !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .bg-warning-50 {[m
+[32m+[m[32m  background-color: rgba(245, 158, 11, 0.15) !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .bg-rose-50 {[m
+[32m+[m[32m  background-color: rgba(239, 68, 68, 0.15) !important;[m
+[32m+[m[32m}[m
+[32m+[m[32mhtml.dark .border-base-600 {[m
+[32m+[m[32m  border-color: #334155 !important;[m
+[32m+[m[32m}[m
+[41m+[m
+[1mdiff --git a/frontend/project/src/pages/Analysis.tsx b/frontend/project/src/pages/Analysis.tsx[m
+[1mindex 8a2633e..3984a12 100644[m
+[1m--- a/frontend/project/src/pages/Analysis.tsx[m
+[1m+++ b/frontend/project/src/pages/Analysis.tsx[m
+[36m@@ -46,28 +46,46 @@[m [mexport default function Analysis() {[m
+   const navigate = useNavigate();[m
+   const { fetchWithAuth } = useAuth();[m
+   const [data, setData] = useState<any>(null);[m
+[32m+[m[32m  const [analysisData, setAnalysisData] = useState<any>(null);[m
+   const [loading, setLoading] = useState(true);[m
+   const [activeId, setActiveId] = useState<string | null>(null);[m
+[32m+[m[32m  const [error, setError] = useState<string | null>(null);[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    fetchWithAuth('/dashboard')[m
+[31m-      .then(res => res.json())[m
+[31m-      .then(json => {[m
+[31m-        setData(json);[m
+[31m-        if (json.roadmap && json.roadmap.roadmap && json.roadmap.roadmap.length > 0) {[m
+[31m-          const firstActive = json.roadmap.roadmap.find((n: any) => n.status !== 'locked') || json.roadmap.roadmap[0];[m
+[32m+[m[32m  const fetchAllData = () => {[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    setError(null);[m
+[32m+[m[32m    Promise.all([[m
+[32m+[m[32m      fetchWithAuth('/dashboard').then(res => {[m
+[32m+[m[32m        if (!res.ok) throw new Error('Failed to fetch dashboard data');[m
+[32m+[m[32m        return res.json();[m
+[32m+[m[32m      }),[m
+[32m+[m[32m      fetchWithAuth('/analysis').then(res => {[m
+[32m+[m[32m        if (!res.ok) throw new Error('Failed to fetch analyzer feedback');[m
+[32m+[m[32m        return res.json();[m
+[32m+[m[32m      })[m
+[32m+[m[32m    ])[m
+[32m+[m[32m      .then(([dash, analysis]) => {[m
+[32m+[m[32m        setData(dash);[m
+[32m+[m[32m        setAnalysisData(analysis);[m
+[32m+[m[32m        if (dash.roadmap && dash.roadmap.roadmap && dash.roadmap.roadmap.length > 0) {[m
+[32m+[m[32m          const firstActive = dash.roadmap.roadmap.find((n: any) => n.status !== 'locked') || dash.roadmap.roadmap[0];[m
+           setActiveId(firstActive.topicId);[m
+         }[m
+         setLoading(false);[m
+       })[m
+       .catch(err => {[m
+[31m-        console.error('Failed to load analysis:', err);[m
+[32m+[m[32m        console.error('Failed to load analysis details:', err);[m
+[32m+[m[32m        setError(err.message || 'Connection error to the analytics service.');[m
+         setLoading(false);[m
+       });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    fetchAllData();[m
+   }, []);[m
+ [m
+   const formattedAnalysis = useMemo(() => {[m
+[31m-    if (!data || !data.roadmap || !data.roadmap.roadmap) return [];[m
+[32m+[m[32m    if (!data || !data.roadmap || !data.roadmap.roadmap || !analysisData) return [];[m
+ [m
+     return data.roadmap.roadmap[m
+       .filter((node: any) => {[m
+[36m@@ -81,16 +99,28 @@[m [mexport default function Analysis() {[m
+         const topicLogs = data.recentEvidence.filter((e: any) => e.topicId === node.topicId);[m
+         const lastAttempt = topicLogs.length > 0 ? topicLogs[0].timestamp : Date.now();[m
+ [m
+[31m-        // Conceptual strengths and weak areas[m
+[31m-        const strongAreas = score >= 80 [m
+[31m-          ? [`Familiarity with basic ${node.title} tags`, `Correct structuring of elements`, `Mastery of semantic hierarchy`][m
+[32m+[m[32m        // Conceptual strengths and weak areas from backend recommendations[m
+[32m+[m[32m        const isWeak = analysisData.summary.weakTopics.includes(node.topicId);[m
+[32m+[m[32m        const isStrong = analysisData.summary.strongTopics.includes(node.topicId);[m
+[32m+[m[32m        const isReview = analysisData.recommendations.reviewTopics.includes(node.topicId);[m
+[32m+[m
+[32m+[m[32m        const strongAreas = isStrong[m[41m [m
+[32m+[m[32m          ? [`Excellent ${node.title} retention`, `Accurate mental model of core tags`, `Proper hierarchy implementation`][m
+           : score >= 60[m
+[31m-          ? [`Familiarity with basic ${node.title} tags`, `Constructive logic flows`][m
+[31m-          : [`Familiarity with foundational terms`];[m
+[32m+[m[32m          ? [`Good grasp of basic ${node.title} elements`, `Constructive logic flows`][m
+[32m+[m[32m          : [`Developing basic ${node.title} familiarity`];[m
+ [m
+[31m-        const weakAreas = score < 80 [m
+[31m-          ? [`Retain ${node.title} rules`, `Review corner scenarios`, `Avoid precision gaps under timed quiz environments`][m
+[31m-          : [];[m
+[32m+[m[32m        const weakAreas = [];[m
+[32m+[m[32m        if (isWeak) {[m
+[32m+[m[32m          weakAreas.push(`Fails to isolate ${node.title} concepts`);[m
+[32m+[m[32m          weakAreas.push(`Prerequisite alignment has conceptual opportunities`);[m
+[32m+[m[32m        }[m
+[32m+[m[32m        if (isReview) {[m
+[32m+[m[32m          weakAreas.push(`Declining retention rate (consecutive negative deltas)`);[m
+[32m+[m[32m        }[m
+[32m+[m[32m        if (score < 80 && weakAreas.length === 0) {[m
+[32m+[m[32m          weakAreas.push(`Peeling away basic syntax layers under pressure`);[m
+[32m+[m[32m        }[m
+ [m
+         return {[m
+           id: node.topicId,[m
+[36m@@ -102,7 +132,7 @@[m [mexport default function Analysis() {[m
+           strongAreas,[m
+         };[m
+       });[m
+[31m-  }, [data]);[m
+[32m+[m[32m  }, [data, analysisData]);[m
+ [m
+   const active = useMemo(() => {[m
+     if (formattedAnalysis.length === 0) return null;[m
+[36m@@ -117,6 +147,22 @@[m [mexport default function Analysis() {[m
+     );[m
+   }[m
+ [m
+[32m+[m[32m  if (error) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Performance Analysis" description="Insights into your strengths and gaps.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6 border-rose-200 bg-rose-50/20">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-danger-600">Failed to load analytics</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>[m
+[32m+[m[32m            <button onClick={fetchAllData} className="btn-primary mx-auto">[m
+[32m+[m[32m              Retry Load[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+   const hasRoadmap = data?.roadmap && data?.roadmap.goal && data?.roadmap.roadmap.length > 0;[m
+ [m
+   return ([m
+[1mdiff --git a/frontend/project/src/pages/Dashboard.tsx b/frontend/project/src/pages/Dashboard.tsx[m
+[1mindex 195f8a4..0d9c922 100644[m
+[1m--- a/frontend/project/src/pages/Dashboard.tsx[m
+[1m+++ b/frontend/project/src/pages/Dashboard.tsx[m
+[36m@@ -135,21 +135,32 @@[m [mexport default function Dashboard() {[m
+   const { fetchWithAuth } = useAuth();[m
+   const [data, setData] = useState<any>(null);[m
+   const [loading, setLoading] = useState(true);[m
+[32m+[m[32m  const [error, setError] = useState<string | null>(null);[m
+ [m
+[31m-  useEffect(() => {[m
+[32m+[m[32m  const loadData = () => {[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    setError(null);[m
+     fetchWithAuth('/dashboard')[m
+[31m-      .then(res => res.json())[m
+[32m+[m[32m      .then(res => {[m
+[32m+[m[32m        if (!res.ok) throw new Error('Failed to load dashboard metrics');[m
+[32m+[m[32m        return res.json();[m
+[32m+[m[32m      })[m
+       .then(json => {[m
+         setData(json);[m
+         setLoading(false);[m
+       })[m
+       .catch(err => {[m
+         console.error('Error fetching dashboard:', err);[m
+[32m+[m[32m        setError(err.message || 'Error communicating with server.');[m
+         setLoading(false);[m
+       });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    loadData();[m
+   }, []);[m
+ [m
+[31m-  if (loading || !data) {[m
+[32m+[m[32m  if (loading) {[m
+     return ([m
+       <div className="min-h-screen flex items-center justify-center bg-base-900">[m
+         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />[m
+[36m@@ -157,6 +168,22 @@[m [mexport default function Dashboard() {[m
+     );[m
+   }[m
+ [m
+[32m+[m[32m  if (error) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Dashboard" description="Your learning progress at a glance.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6 border-rose-200 bg-rose-50/20">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-danger-600">Failed to load Dashboard</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>[m
+[32m+[m[32m            <button onClick={loadData} className="btn-primary mx-auto">[m
+[32m+[m[32m              Retry Load[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+   // Construct metrics based on backend response[m
+   const metrics: DashboardMetric[] = [[m
+     {[m
+[36m@@ -429,7 +456,7 @@[m [mexport default function Dashboard() {[m
+               </div>[m
+             ) : ([m
+               <p className="text-sm text-slate-500 text-center py-4">[m
+[31m-                No recent activity. Complete a quiz to see evidence log tracking here![m
+[32m+[m[32m                No recent activity yet.[m
+               </p>[m
+             )}[m
+           </div>[m
+[1mdiff --git a/frontend/project/src/pages/FocusedSession.tsx b/frontend/project/src/pages/FocusedSession.tsx[m
+[1mindex bdd2e42..ca0b4bf 100644[m
+[1m--- a/frontend/project/src/pages/FocusedSession.tsx[m
+[1m+++ b/frontend/project/src/pages/FocusedSession.tsx[m
+[36m@@ -235,19 +235,30 @@[m [mexport default function FocusedSession() {[m
+   const [running, setRunning] = useState(true);[m
+   const [completed, setCompleted] = useState(false);[m
+   const [loading, setLoading] = useState(true);[m
+[32m+[m[32m  const [error, setError] = useState<string | null>(null);[m
+   const [dashboardData, setDashboardData] = useState<any>(null);[m
+ [m
+[31m-  useEffect(() => {[m
+[32m+[m[32m  const loadDashboard = () => {[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    setError(null);[m
+     fetchWithAuth('/dashboard')[m
+[31m-      .then(res => res.json())[m
+[32m+[m[32m      .then(res => {[m
+[32m+[m[32m        if (!res.ok) throw new Error('Failed to load focused session metrics');[m
+[32m+[m[32m        return res.json();[m
+[32m+[m[32m      })[m
+       .then(json => {[m
+         setDashboardData(json);[m
+         setLoading(false);[m
+       })[m
+       .catch(err => {[m
+         console.error('Error fetching dashboard for focused session:', err);[m
+[32m+[m[32m        setError(err.message || 'Error communicating with server.');[m
+         setLoading(false);[m
+       });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    loadDashboard();[m
+   }, []);[m
+ [m
+   useEffect(() => {[m
+[36m@@ -297,6 +308,43 @@[m [mexport default function FocusedSession() {[m
+     );[m
+   }[m
+ [m
+[32m+[m[32m  if (error) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Focused Session" description="Immersive topic practice and timer checks.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6 border-rose-200 bg-rose-50/20">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-danger-600">Failed to load Focused Session</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>[m
+[32m+[m[32m            <button onClick={loadDashboard} className="btn-primary mx-auto">[m
+[32m+[m[32m              Retry Load[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const hasRoadmap = dashboardData?.roadmap && dashboardData?.roadmap.goal && dashboardData?.roadmap.roadmap.length > 0;[m
+[32m+[m
+[32m+[m[32m  if (!hasRoadmap) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Focused Session" description="Immersive topic practice and timer checks.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-slate-900">No Learning Path Active</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">[m
+[32m+[m[32m              Create a learning goal on the Roadmap page first to begin focused study sessions.[m
+[32m+[m[32m            </p>[m
+[32m+[m[32m            <button onClick={() => navigate('/roadmap')} className="btn-primary mx-auto">[m
+[32m+[m[32m              Go to Roadmap[m
+[32m+[m[32m              <ArrowRight className="w-4 h-4" />[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+   return ([m
+     <PageLayout[m
+       title="Focused Session"[m
+[1mdiff --git a/frontend/project/src/pages/ForgotPassword.tsx b/frontend/project/src/pages/ForgotPassword.tsx[m
+[1mindex afde834..977e28c 100644[m
+[1m--- a/frontend/project/src/pages/ForgotPassword.tsx[m
+[1m+++ b/frontend/project/src/pages/ForgotPassword.tsx[m
+[36m@@ -3,7 +3,6 @@[m [mimport { Link } from 'react-router-dom';[m
+ import { Mail, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';[m
+ import AuthLayout from '../components/layout/AuthLayout';[m
+ import { TextField } from '../components/auth/PasswordField';[m
+[31m-import GoogleButton from '../components/auth/GoogleButton';[m
+ [m
+ export default function ForgotPassword() {[m
+   const [email, setEmail] = useState('');[m
+[36m@@ -95,16 +94,6 @@[m [mexport default function ForgotPassword() {[m
+       }[m
+     >[m
+       <form onSubmit={onSubmit} className="space-y-4" noValidate>[m
+[31m-        <GoogleButton label="Continue with Google" disabled />[m
+[31m-[m
+[31m-        <div className="relative my-5">[m
+[31m-          <div className="absolute inset-0 flex items-center">[m
+[31m-            <div className="w-full border-t border-base-600" />[m
+[31m-          </div>[m
+[31m-          <div className="relative flex justify-center text-xs">[m
+[31m-            <span className="bg-white px-3 text-slate-400">or</span>[m
+[31m-          </div>[m
+[31m-        </div>[m
+ [m
+         <TextField[m
+           id="email"[m
+[1mdiff --git a/frontend/project/src/pages/Notifications.tsx b/frontend/project/src/pages/Notifications.tsx[m
+[1mindex e5cb59d..151086b 100644[m
+[1m--- a/frontend/project/src/pages/Notifications.tsx[m
+[1m+++ b/frontend/project/src/pages/Notifications.tsx[m
+[36m@@ -1,3 +1,4 @@[m
+[32m+[m[32mimport { useEffect, useState } from 'react';[m
+ import { motion } from 'framer-motion';[m
+ import {[m
+   Bell,[m
+[36m@@ -8,7 +9,7 @@[m [mimport {[m
+   CheckCircle2,[m
+ } from 'lucide-react';[m
+ import PageLayout from '../components/layout/PageLayout';[m
+[31m-import { mockRecentActivity } from '../services/mockData';[m
+[32m+[m[32mimport { useAuth } from '../context/AuthContext';[m
+ [m
+ const iconMap = {[m
+   quiz: HelpCircle,[m
+[36m@@ -25,6 +26,43 @@[m [mconst colorMap = {[m
+ } as const;[m
+ [m
+ export default function Notifications() {[m
+[32m+[m[32m  const { fetchWithAuth } = useAuth();[m
+[32m+[m[32m  const [data, setData] = useState<any>(null);[m
+[32m+[m[32m  const [loading, setLoading] = useState(true);[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    fetchWithAuth('/dashboard')[m
+[32m+[m[32m      .then((res) => res.json())[m
+[32m+[m[32m      .then((json) => {[m
+[32m+[m[32m        setData(json);[m
+[32m+[m[32m        setLoading(false);[m
+[32m+[m[32m      })[m
+[32m+[m[32m      .catch((err) => {[m
+[32m+[m[32m        console.error('Failed to load notifications:', err);[m
+[32m+[m[32m        setLoading(false);[m
+[32m+[m[32m      });[m
+[32m+[m[32m  }, []);[m
+[32m+[m
+[32m+[m[32m  if (loading || !data) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <div className="min-h-screen flex items-center justify-center bg-base-900">[m
+[32m+[m[32m        <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Map database evidence logs into recent activities[m
+[32m+[m[32m  const recentActivities = data.recentEvidence.map((log: any, idx: number) => {[m
+[32m+[m[32m    const isCompleted = log.newScore >= 80;[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      id: `act-${idx}`,[m
+[32m+[m[32m      type: isCompleted ? ('milestone' as const) : ('quiz' as const),[m
+[32m+[m[32m      title: `Quiz Checkpoint on ${data.roadmap.roadmap.find((n: any) => n.topicId === log.topicId)?.title || log.topicId}`,[m
+[32m+[m[32m      detail: `Score updated to ${log.newScore}% (Correct: ${log.correct ? 'Yes' : 'No'})`,[m
+[32m+[m[32m      timestamp: new Date(log.timestamp).toLocaleDateString(),[m
+[32m+[m[32m    };[m
+[32m+[m[32m  });[m
+[32m+[m
+   return ([m
+     <PageLayout[m
+       title="Notifications"[m
+[36m@@ -43,38 +81,45 @@[m [mexport default function Notifications() {[m
+               Recent Activity[m
+             </h3>[m
+           </div>[m
+[31m-          <div className="relative space-y-5">[m
+[31m-            <div className="absolute left-[18px] top-2 bottom-2 w-px bg-base-600" />[m
+[31m-            {mockRecentActivity.map((item, i) => {[m
+[31m-              const Icon = iconMap[item.type];[m
+[31m-              return ([m
+[31m-                <motion.div[m
+[31m-                  key={item.id}[m
+[31m-                  initial={{ opacity: 0, y: 6 }}[m
+[31m-                  animate={{ opacity: 1, y: 0 }}[m
+[31m-                  transition={{ duration: 0.25, delay: i * 0.05 }}[m
+[31m-                  className="relative flex items-start gap-4"[m
+[31m-                >[m
+[31m-                  <div[m
+[31m-                    className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${colorMap[item.type]}`}[m
+[32m+[m[41m          [m
+[32m+[m[32m          {recentActivities.length > 0 ? ([m
+[32m+[m[32m            <div className="relative space-y-5">[m
+[32m+[m[32m              <div className="absolute left-[18px] top-2 bottom-2 w-px bg-base-600" />[m
+[32m+[m[32m              {recentActivities.map((item: any, i: number) => {[m
+[32m+[m[32m                const Icon = iconMap[item.type as keyof typeof iconMap] || HelpCircle;[m
+[32m+[m[32m                return ([m
+[32m+[m[32m                  <motion.div[m
+[32m+[m[32m                    key={item.id}[m
+[32m+[m[32m                    initial={{ opacity: 0, y: 6 }}[m
+[32m+[m[32m                    animate={{ opacity: 1, y: 0 }}[m
+[32m+[m[32m                    transition={{ duration: 0.25, delay: i * 0.05 }}[m
+[32m+[m[32m                    className="relative flex items-start gap-4"[m
+                   >[m
+[31m-                    <Icon className="w-4 h-4" />[m
+[31m-                  </div>[m
+[31m-                  <div className="min-w-0 flex-1">[m
+[31m-                    <p className="text-[13px] font-medium text-slate-900">[m
+[31m-                      {item.title}[m
+[31m-                    </p>[m
+[31m-                    <p className="text-xs text-slate-500 mt-0.5">[m
+[31m-                      {item.detail}[m
+[31m-                    </p>[m
+[31m-                  </div>[m
+[31m-                  <span className="text-xs text-slate-400 shrink-0">[m
+[31m-                    {item.timestamp}[m
+[31m-                  </span>[m
+[31m-                </motion.div>[m
+[31m-              );[m
+[31m-            })}[m
+[31m-          </div>[m
+[32m+[m[32m                    <div[m
+[32m+[m[32m                      className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${colorMap[item.type as keyof typeof colorMap] || 'bg-accent-50 text-accent-600'}`}[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      <Icon className="w-4 h-4" />[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                    <div className="min-w-0 flex-1">[m
+[32m+[m[32m                      <p className="text-[13px] font-medium text-slate-900">[m
+[32m+[m[32m                        {item.title}[m
+[32m+[m[32m                      </p>[m
+[32m+[m[32m                      <p className="text-xs text-slate-500 mt-0.5">[m
+[32m+[m[32m                        {item.detail}[m
+[32m+[m[32m                      </p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                    <span className="text-xs text-slate-400 shrink-0">[m
+[32m+[m[32m                      {item.timestamp}[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                  </motion.div>[m
+[32m+[m[32m                );[m
+[32m+[m[32m              })}[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          ) : ([m
+[32m+[m[32m            <p className="text-sm text-slate-500 text-center py-4">[m
+[32m+[m[32m              No recent activity yet.[m
+[32m+[m[32m            </p>[m
+[32m+[m[32m          )}[m
+         </motion.div>[m
+ [m
+         <motion.div[m
+[1mdiff --git a/frontend/project/src/pages/Profile.tsx b/frontend/project/src/pages/Profile.tsx[m
+[1mindex b5cc597..6eacf9f 100644[m
+[1m--- a/frontend/project/src/pages/Profile.tsx[m
+[1m+++ b/frontend/project/src/pages/Profile.tsx[m
+[36m@@ -45,18 +45,29 @@[m [mexport default function Profile() {[m
+   const { user, fetchWithAuth } = useAuth();[m
+   const [data, setData] = useState<any>(null);[m
+   const [loading, setLoading] = useState(true);[m
+[32m+[m[32m  const [error, setError] = useState<string | null>(null);[m
+ [m
+[31m-  useEffect(() => {[m
+[32m+[m[32m  const fetchProfile = () => {[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    setError(null);[m
+     fetchWithAuth('/dashboard')[m
+[31m-      .then(res => res.json())[m
+[32m+[m[32m      .then(res => {[m
+[32m+[m[32m        if (!res.ok) throw new Error('Failed to load profile details');[m
+[32m+[m[32m        return res.json();[m
+[32m+[m[32m      })[m
+       .then(json => {[m
+         setData(json);[m
+         setLoading(false);[m
+       })[m
+       .catch(err => {[m
+         console.error('Failed to load profile stats:', err);[m
+[32m+[m[32m        setError(err.message || 'Error communicating with server.');[m
+         setLoading(false);[m
+       });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    fetchProfile();[m
+   }, []);[m
+ [m
+   const name = user?.name || user?.email.split('@')[0] || 'Learner';[m
+[36m@@ -68,7 +79,7 @@[m [mexport default function Profile() {[m
+     .slice(0, 2)[m
+     .toUpperCase();[m
+ [m
+[31m-  if (loading || !data) {[m
+[32m+[m[32m  if (loading) {[m
+     return ([m
+       <div className="min-h-screen flex items-center justify-center bg-base-900">[m
+         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />[m
+[36m@@ -76,10 +87,26 @@[m [mexport default function Profile() {[m
+     );[m
+   }[m
+ [m
+[31m-  const level = data.stats.completedTopics + 1;[m
+[31m-  const xp = data.stats.completedTopics * 100;[m
+[31m-  const streak = data.stats.streak;[m
+[31m-  const mastery = `${data.stats.overallProgress}%`;[m
+[32m+[m[32m  if (error) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Profile" description="Your account and learning identity.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6 border-rose-200 bg-rose-50/20">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-danger-600">Failed to load Profile</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>[m
+[32m+[m[32m            <button onClick={fetchProfile} className="btn-primary mx-auto">[m
+[32m+[m[32m              Retry Load[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const level = data?.stats?.completedTopics + 1 || 1;[m
+[32m+[m[32m  const xp = (data?.stats?.completedTopics || 0) * 100;[m
+[32m+[m[32m  const streak = data?.stats?.streak || 0;[m
+[32m+[m[32m  const mastery = `${data?.stats?.overallProgress || 0}%`;[m
+ [m
+   return ([m
+     <PageLayout title="Profile" description="Your account and learning identity.">[m
+[36m@@ -144,12 +171,6 @@[m [mexport default function Profile() {[m
+             </h3>[m
+           </div>[m
+           <div className="space-y-3">[m
+[31m-            <div className="flex items-center justify-between py-2.5 border-b border-base-600">[m
+[31m-              <span className="text-sm text-slate-500">Member since</span>[m
+[31m-              <span className="text-sm font-medium text-slate-900">[m
+[31m-                July 2026[m
+[31m-              </span>[m
+[31m-            </div>[m
+             <div className="flex items-center justify-between py-2.5 border-b border-base-600">[m
+               <span className="text-sm text-slate-500">Plan</span>[m
+               <span className="text-sm font-medium text-slate-900">Free</span>[m
+[36m@@ -157,7 +178,7 @@[m [mexport default function Profile() {[m
+             <div className="flex items-center justify-between py-2.5">[m
+               <span className="text-sm text-slate-500">Account ID</span>[m
+               <span className="text-sm font-mono text-slate-600 truncate max-w-[200px]">[m
+[31m-                {user?.id?.slice(0, 8) || 'u_001'}[m
+[32m+[m[32m                {user?.id || 'u_001'}[m
+               </span>[m
+             </div>[m
+           </div>[m
+[1mdiff --git a/frontend/project/src/pages/Quiz.tsx b/frontend/project/src/pages/Quiz.tsx[m
+[1mindex 6395b5f..0eecefd 100644[m
+[1m--- a/frontend/project/src/pages/Quiz.tsx[m
+[1m+++ b/frontend/project/src/pages/Quiz.tsx[m
+[36m@@ -85,6 +85,7 @@[m [mexport default function Quiz() {[m
+   const [answers, setAnswers] = useState<any[]>([]);[m
+   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);[m
+   const [loading, setLoading] = useState(true);[m
+[32m+[m[32m  const [error, setError] = useState<string | null>(null);[m
+ [m
+   // Extract topicId from router state if redirected[m
+   useEffect(() => {[m
+[36m@@ -100,6 +101,7 @@[m [mexport default function Quiz() {[m
+   // Load quiz from backend[m
+   const loadQuiz = async () => {[m
+     setLoading(true);[m
+[32m+[m[32m    setError(null);[m
+     try {[m
+       const res = await fetchWithAuth('/quiz', {[m
+         method: 'POST',[m
+[36m@@ -112,13 +114,19 @@[m [mexport default function Quiz() {[m
+       });[m
+ [m
+       if (res.ok) {[m
+[31m-        const json = await res.ok ? await res.json() : null;[m
+[31m-        if (json && json.questions) {[m
+[32m+[m[32m        const json = await res.json();[m
+[32m+[m[32m        if (json && json.questions && json.questions.length > 0) {[m
+           setQuestions(json.questions);[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m          throw new Error('No questions returned for this topic.');[m
+         }[m
+[32m+[m[32m      } else {[m
+[32m+[m[32m        const errJson = await res.json();[m
+[32m+[m[32m        throw new Error(errJson.error || 'Failed to load quiz checkpoint questions.');[m
+       }[m
+[31m-    } catch (err) {[m
+[32m+[m[32m    } catch (err: any) {[m
+       console.error('Failed to load quiz:', err);[m
+[32m+[m[32m      setError(err.message || 'Error communicating with quiz service.');[m
+     } finally {[m
+       setLoading(false);[m
+     }[m
+[36m@@ -240,6 +248,22 @@[m [mexport default function Quiz() {[m
+     );[m
+   }[m
+ [m
+[32m+[m[32m  if (error) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Adaptive Checkpoint" description="Probes your active understanding.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6 border-rose-200 bg-rose-50/20">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-danger-600">Failed to generate Quiz</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>[m
+[32m+[m[32m            <button onClick={loadQuiz} className="btn-primary mx-auto">[m
+[32m+[m[32m              Retry Load[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+   return ([m
+     <PageLayout[m
+       title="Adaptive Checkpoint"[m
+[1mdiff --git a/frontend/project/src/pages/Roadmap.tsx b/frontend/project/src/pages/Roadmap.tsx[m
+[1mindex 0e6bd26..e1b749a 100644[m
+[1m--- a/frontend/project/src/pages/Roadmap.tsx[m
+[1m+++ b/frontend/project/src/pages/Roadmap.tsx[m
+[36m@@ -381,16 +381,24 @@[m [mexport default function Roadmap() {[m
+   const [loading, setLoading] = useState(true);[m
+   const [goalInput, setGoalInput] = useState('');[m
+   const [submitting, setSubmitting] = useState(false);[m
+[32m+[m[32m  const [plannerError, setPlannerError] = useState<string | null>(null);[m
+[32m+[m[32m  const [error, setError] = useState<string | null>(null);[m
+ [m
+   const fetchDashboard = () => {[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    setError(null);[m
+     fetchWithAuth('/dashboard')[m
+[31m-      .then(res => res.json())[m
+[32m+[m[32m      .then(res => {[m
+[32m+[m[32m        if (!res.ok) throw new Error('Failed to load learning goal roadmap');[m
+[32m+[m[32m        return res.json();[m
+[32m+[m[32m      })[m
+       .then(json => {[m
+         setData(json);[m
+         setLoading(false);[m
+       })[m
+       .catch(err => {[m
+         console.error('Error fetching roadmap data:', err);[m
+[32m+[m[32m        setError(err.message || 'Error communicating with server.');[m
+         setLoading(false);[m
+       });[m
+   };[m
+[36m@@ -404,6 +412,7 @@[m [mexport default function Roadmap() {[m
+     if (!goalInput.trim()) return;[m
+ [m
+     setSubmitting(true);[m
+[32m+[m[32m    setPlannerError(null);[m
+     try {[m
+       const res = await fetchWithAuth('/planner', {[m
+         method: 'POST',[m
+[36m@@ -412,14 +421,19 @@[m [mexport default function Roadmap() {[m
+       });[m
+ [m
+       if (res.ok) {[m
+[31m-        setGoalInput('');[m
+[31m-        fetchDashboard();[m
+[32m+[m[32m        const json = await res.json();[m
+[32m+[m[32m        if (json.message === 'Unknown goal' || !json.roadmap || json.roadmap.length === 0) {[m
+[32m+[m[32m          setPlannerError("We couldn't generate a personalized roadmap for this learning goal yet. Please try a broader topic or one that is currently supported.");[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m          setGoalInput('');[m
+[32m+[m[32m          fetchDashboard();[m
+[32m+[m[32m        }[m
+       } else {[m
+         const errJson = await res.json();[m
+[31m-        alert(errJson.error || 'Failed to create roadmap');[m
+[32m+[m[32m        setPlannerError(errJson.error || 'Failed to create roadmap');[m
+       }[m
+     } catch (err: any) {[m
+[31m-      alert(err.message || 'Error communicating with planner agent');[m
+[32m+[m[32m      setPlannerError(err.message || 'Error communicating with planner agent');[m
+     } finally {[m
+       setSubmitting(false);[m
+     }[m
+[36m@@ -477,6 +491,22 @@[m [mexport default function Roadmap() {[m
+     );[m
+   }[m
+ [m
+[32m+[m[32m  if (error) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <PageLayout title="Learning Roadmap" description="Your personalized path to mastery.">[m
+[32m+[m[32m        <div className="max-w-xl mx-auto mt-8 text-center">[m
+[32m+[m[32m          <div className="card p-6 border-rose-200 bg-rose-50/20">[m
+[32m+[m[32m            <h2 className="text-lg font-semibold text-danger-600">Failed to load Roadmap</h2>[m
+[32m+[m[32m            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>[m
+[32m+[m[32m            <button onClick={fetchDashboard} className="btn-primary mx-auto">[m
+[32m+[m[32m              Retry Load[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </PageLayout>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+   // Active Goal Check[m
+   const hasRoadmap = data.roadmap && data.roadmap.goal && data.roadmap.roadmap.length > 0;[m
+ [m
+[36m@@ -494,6 +524,11 @@[m [mexport default function Roadmap() {[m
+             <p className="text-sm text-slate-600 mb-6">[m
+               Enter a learning objective (e.g. "Frontend Developer", "Machine Learning", "Backend Architect") to dynamically generate your structured path.[m
+             </p>[m
+[32m+[m[32m            {plannerError && ([m
+[32m+[m[32m              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-danger-600 mb-4">[m
+[32m+[m[32m                {plannerError}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            )}[m
+             <form onSubmit={handleCreateRoadmap} className="space-y-4">[m
+               <div>[m
+                 <label htmlFor="goal" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">[m
+[1mdiff --git a/frontend/project/src/pages/Settings.tsx b/frontend/project/src/pages/Settings.tsx[m
+[1mindex 914364b..8fc3612 100644[m
+[1m--- a/frontend/project/src/pages/Settings.tsx[m
+[1m+++ b/frontend/project/src/pages/Settings.tsx[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-import { useState, type ReactNode } from 'react';[m
+[32m+[m[32mimport { useState, useEffect, type ReactNode } from 'react';[m
+ import { useNavigate } from 'react-router-dom';[m
+ import { motion } from 'framer-motion';[m
+ import {[m
+[36m@@ -22,10 +22,9 @@[m [mimport {[m
+   AlertTriangle,[m
+ } from 'lucide-react';[m
+ import PageLayout from '../components/layout/PageLayout';[m
+[31m-import { mockUser } from '../services/mockData';[m
+ import { useAuth } from '../context/AuthContext';[m
+[32m+[m[32mimport { useTheme } from '../context/ThemeContext';[m
+ [m
+[31m-type Theme = 'light' | 'dark' | 'system';[m
+ type Speed = 'relaxed' | 'balanced' | 'intensive';[m
+ [m
+ function SectionCard({[m
+[36m@@ -218,10 +217,11 @@[m [mfunction SpeedOption({[m
+ [m
+ export default function Settings() {[m
+   const navigate = useNavigate();[m
+[31m-  const { signOut } = useAuth();[m
+[31m-  const [name, setName] = useState(mockUser.name);[m
+[31m-  const [email, setEmail] = useState(mockUser.email);[m
+[31m-  const [theme, setTheme] = useState<Theme>('light');[m
+[32m+[m[32m  const { user, signOut, updateProfile } = useAuth();[m
+[32m+[m[32m  const { theme, setTheme } = useTheme();[m
+[32m+[m
+[32m+[m[32m  const [name, setName] = useState('');[m
+[32m+[m[32m  const [email, setEmail] = useState('');[m
+   const [speed, setSpeed] = useState<Speed>('balanced');[m
+   const [dailyGoal, setDailyGoal] = useState(45);[m
+   const [reminderTime, setReminderTime] = useState('18:00');[m
+[36m@@ -231,7 +231,17 @@[m [mexport default function Settings() {[m
+   const [saved, setSaved] = useState(false);[m
+   const [confirmDelete, setConfirmDelete] = useState(false);[m
+ [m
+[31m-  const handleSave = () => {[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    if (user) {[m
+[32m+[m[32m      setName(user.name || user.email.split('@')[0]);[m
+[32m+[m[32m      setEmail(user.email);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }, [user]);[m
+[32m+[m
+[32m+[m[32m  const handleSave = async () => {[m
+[32m+[m[32m    if (name.trim()) {[m
+[32m+[m[32m      await updateProfile(name.trim());[m
+[32m+[m[32m    }[m
+     setSaved(true);[m
+     setTimeout(() => setSaved(false), 2500);[m
+   };[m
+[36m@@ -450,7 +460,6 @@[m [mexport default function Settings() {[m
+               label="Dark"[m
+               active={theme === 'dark'}[m
+               onClick={() => setTheme('dark')}[m
+[31m-              badge="Soon"[m
+             />[m
+             <ThemeOption[m
+               icon={Monitor}[m
+[36m@@ -459,10 +468,6 @@[m [mexport default function Settings() {[m
+               onClick={() => setTheme('system')}[m
+             />[m
+           </div>[m
+[31m-          <p className="mt-4 text-xs text-slate-500 leading-relaxed">[m
+[31m-            Dark theme is coming soon. Selecting it will preview a placeholder[m
+[31m-            state until the full palette ships.[m
+[31m-          </p>[m
+         </SectionCard>[m
+ [m
+         {/* Security */}[m
+[1mdiff --git a/frontend/project/src/pages/SignUp.tsx b/frontend/project/src/pages/SignUp.tsx[m
+[1mindex a3aa36b..8c2452a 100644[m
+[1m--- a/frontend/project/src/pages/SignUp.tsx[m
+[1m+++ b/frontend/project/src/pages/SignUp.tsx[m
+[36m@@ -3,7 +3,6 @@[m [mimport { Link, useNavigate } from 'react-router-dom';[m
+ import { Mail, ArrowRight, Check } from 'lucide-react';[m
+ import AuthLayout from '../components/layout/AuthLayout';[m
+ import PasswordField, { TextField } from '../components/auth/PasswordField';[m
+[31m-import GoogleButton from '../components/auth/GoogleButton';[m
+ import { useAuth } from '../context/AuthContext';[m
+ [m
+ interface Strength {[m
+[36m@@ -53,7 +52,6 @@[m [mexport default function SignUp() {[m
+     form?: string;[m
+   }>({});[m
+   const [loading, setLoading] = useState(false);[m
+[31m-  const [googleLoading, setGoogleLoading] = useState(false);[m
+ [m
+   const strength = strengthFor(password);[m
+ [m
+[36m@@ -85,14 +83,6 @@[m [mexport default function SignUp() {[m
+     navigate('/dashboard');[m
+   };[m
+ [m
+[31m-  const onGoogle = () => {[m
+[31m-    setGoogleLoading(true);[m
+[31m-    setTimeout(() => {[m
+[31m-      setGoogleLoading(false);[m
+[31m-      navigate('/login');[m
+[31m-    }, 1200);[m
+[31m-  };[m
+[31m-[m
+   const onPasswordChange = (e: ChangeEvent<HTMLInputElement>) => {[m
+     setPassword(e.target.value);[m
+     if (errors.password) setErrors((p) => ({ ...p, password: undefined }));[m
+[36m@@ -120,16 +110,6 @@[m [mexport default function SignUp() {[m
+             {errors.form}[m
+           </div>[m
+         )}[m
+[31m-        <GoogleButton onClick={onGoogle} loading={googleLoading} />[m
+[31m-[m
+[31m-        <div className="relative my-5">[m
+[31m-          <div className="absolute inset-0 flex items-center">[m
+[31m-            <div className="w-full border-t border-base-600" />[m
+[31m-          </div>[m
+[31m-          <div className="relative flex justify-center text-xs">[m
+[31m-            <span className="bg-white px-3 text-slate-400">or</span>[m
+[31m-          </div>[m
+[31m-        </div>[m
+ [m
+         <TextField[m
+           id="name"[m

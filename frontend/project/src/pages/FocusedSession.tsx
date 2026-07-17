@@ -235,19 +235,30 @@ export default function FocusedSession() {
   const [running, setRunning] = useState(true);
   const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
 
-  useEffect(() => {
+  const loadDashboard = () => {
+    setLoading(true);
+    setError(null);
     fetchWithAuth('/dashboard')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load focused session metrics');
+        return res.json();
+      })
       .then(json => {
         setDashboardData(json);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching dashboard for focused session:', err);
+        setError(err.message || 'Error communicating with server.');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadDashboard();
   }, []);
 
   useEffect(() => {
@@ -294,6 +305,43 @@ export default function FocusedSession() {
       <div className="min-h-screen flex items-center justify-center bg-base-900">
         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageLayout title="Focused Session" description="Immersive topic practice and timer checks.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6 border-rose-200 bg-rose-50/20">
+            <h2 className="text-lg font-semibold text-danger-600">Failed to load Focused Session</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
+            <button onClick={loadDashboard} className="btn-primary mx-auto">
+              Retry Load
+            </button>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const hasRoadmap = dashboardData?.roadmap && dashboardData?.roadmap.goal && dashboardData?.roadmap.roadmap.length > 0;
+
+  if (!hasRoadmap) {
+    return (
+      <PageLayout title="Focused Session" description="Immersive topic practice and timer checks.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold text-slate-900">No Learning Path Active</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">
+              Create a learning goal on the Roadmap page first to begin focused study sessions.
+            </p>
+            <button onClick={() => navigate('/roadmap')} className="btn-primary mx-auto">
+              Go to Roadmap
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 

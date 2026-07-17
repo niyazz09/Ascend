@@ -29,6 +29,7 @@ interface AuthContextValue {
   ) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
+  updateProfile: (name: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -116,13 +117,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   };
 
+  const updateProfile = async (newName: string) => {
+    if (session) {
+      const updatedSession = {
+        ...session,
+        user: {
+          ...session.user,
+          name: newName,
+        },
+      };
+      localStorage.setItem('ascend_session', JSON.stringify(updatedSession));
+      setSession(updatedSession);
+    }
+  };
+
   const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     const headers = {
       ...(options.headers || {}),
     } as Record<string, string>;
 
-    if (session?.token) {
-      headers['Authorization'] = `Bearer ${session.token}`;
+    let token = session?.token;
+    if (!token) {
+      const stored = localStorage.getItem('ascend_session');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          token = parsed.token;
+        } catch (e) {}
+      }
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const res = await fetch(url.startsWith('http') ? url : `${API_BASE_URL}${url}`, {
@@ -132,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (res.status === 401 || res.status === 403) {
       await signOut();
+      window.location.href = '/login';
     }
 
     return res;
@@ -147,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         fetchWithAuth,
+        updateProfile,
       }}
     >
       {children}

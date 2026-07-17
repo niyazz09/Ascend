@@ -381,16 +381,24 @@ export default function Roadmap() {
   const [loading, setLoading] = useState(true);
   const [goalInput, setGoalInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [plannerError, setPlannerError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchDashboard = () => {
+    setLoading(true);
+    setError(null);
     fetchWithAuth('/dashboard')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load learning goal roadmap');
+        return res.json();
+      })
       .then(json => {
         setData(json);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching roadmap data:', err);
+        setError(err.message || 'Error communicating with server.');
         setLoading(false);
       });
   };
@@ -404,6 +412,7 @@ export default function Roadmap() {
     if (!goalInput.trim()) return;
 
     setSubmitting(true);
+    setPlannerError(null);
     try {
       const res = await fetchWithAuth('/planner', {
         method: 'POST',
@@ -412,14 +421,19 @@ export default function Roadmap() {
       });
 
       if (res.ok) {
-        setGoalInput('');
-        fetchDashboard();
+        const json = await res.json();
+        if (json.message === 'Unknown goal' || !json.roadmap || json.roadmap.length === 0) {
+          setPlannerError("We couldn't generate a personalized roadmap for this learning goal yet. Please try a broader topic or one that is currently supported.");
+        } else {
+          setGoalInput('');
+          fetchDashboard();
+        }
       } else {
         const errJson = await res.json();
-        alert(errJson.error || 'Failed to create roadmap');
+        setPlannerError(errJson.error || 'Failed to create roadmap');
       }
     } catch (err: any) {
-      alert(err.message || 'Error communicating with planner agent');
+      setPlannerError(err.message || 'Error communicating with planner agent');
     } finally {
       setSubmitting(false);
     }
@@ -477,6 +491,22 @@ export default function Roadmap() {
     );
   }
 
+  if (error) {
+    return (
+      <PageLayout title="Learning Roadmap" description="Your personalized path to mastery.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6 border-rose-200 bg-rose-50/20">
+            <h2 className="text-lg font-semibold text-danger-600">Failed to load Roadmap</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
+            <button onClick={fetchDashboard} className="btn-primary mx-auto">
+              Retry Load
+            </button>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   // Active Goal Check
   const hasRoadmap = data.roadmap && data.roadmap.goal && data.roadmap.roadmap.length > 0;
 
@@ -494,6 +524,11 @@ export default function Roadmap() {
             <p className="text-sm text-slate-600 mb-6">
               Enter a learning objective (e.g. "Frontend Developer", "Machine Learning", "Backend Architect") to dynamically generate your structured path.
             </p>
+            {plannerError && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-danger-600 mb-4">
+                {plannerError}
+              </div>
+            )}
             <form onSubmit={handleCreateRoadmap} className="space-y-4">
               <div>
                 <label htmlFor="goal" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">

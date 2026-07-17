@@ -135,25 +135,52 @@ export default function Dashboard() {
   const { fetchWithAuth } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
+    setError(null);
     fetchWithAuth('/dashboard')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load dashboard metrics');
+        return res.json();
+      })
       .then(json => {
         setData(json);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching dashboard:', err);
+        setError(err.message || 'Error communicating with server.');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-900">
         <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageLayout title="Dashboard" description="Your learning progress at a glance.">
+        <div className="max-w-xl mx-auto mt-8 text-center">
+          <div className="card p-6 border-rose-200 bg-rose-50/20">
+            <h2 className="text-lg font-semibold text-danger-600">Failed to load Dashboard</h2>
+            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
+            <button onClick={loadData} className="btn-primary mx-auto">
+              Retry Load
+            </button>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 
@@ -429,7 +456,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <p className="text-sm text-slate-500 text-center py-4">
-                No recent activity. Complete a quiz to see evidence log tracking here!
+                No recent activity yet.
               </p>
             )}
           </div>

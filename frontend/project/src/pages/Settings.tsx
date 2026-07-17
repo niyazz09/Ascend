@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -22,10 +22,9 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
-import { mockUser } from '../services/mockData';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
-type Theme = 'light' | 'dark' | 'system';
 type Speed = 'relaxed' | 'balanced' | 'intensive';
 
 function SectionCard({
@@ -218,10 +217,11 @@ function SpeedOption({
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  const [name, setName] = useState(mockUser.name);
-  const [email, setEmail] = useState(mockUser.email);
-  const [theme, setTheme] = useState<Theme>('light');
+  const { user, signOut, updateProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [speed, setSpeed] = useState<Speed>('balanced');
   const [dailyGoal, setDailyGoal] = useState(45);
   const [reminderTime, setReminderTime] = useState('18:00');
@@ -231,7 +231,17 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (user) {
+      setName(user.name || user.email.split('@')[0]);
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    if (name.trim()) {
+      await updateProfile(name.trim());
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -450,7 +460,6 @@ export default function Settings() {
               label="Dark"
               active={theme === 'dark'}
               onClick={() => setTheme('dark')}
-              badge="Soon"
             />
             <ThemeOption
               icon={Monitor}
@@ -459,10 +468,6 @@ export default function Settings() {
               onClick={() => setTheme('system')}
             />
           </div>
-          <p className="mt-4 text-xs text-slate-500 leading-relaxed">
-            Dark theme is coming soon. Selecting it will preview a placeholder
-            state until the full palette ships.
-          </p>
         </SectionCard>
 
         {/* Security */}
