@@ -1,0 +1,36 @@
+[
+  {
+    "id": "html-basics",
+    "title": "HTML Basics",
+    "prerequisites": []
+  },
+  {
+    "id": "css-basics",
+    "title": "CSS Basics",
+    "prerequisites": [
+      "html-basics"
+    ]
+  },
+  {
+    "id": "javascript-basics",
+    "title": "JavaScript Basics",
+    "prerequisites": [
+      "html-basics"
+    ]
+  },
+  {
+    "id": "dom-manipulation",
+    "title": "DOM Manipulation",
+    "prerequisites": [
+      "css-basics",
+      "javascript-basics"
+    ]
+  },
+  {
+    "id": "web-apis",
+    "title": "Web APIs",
+    "prerequisites": [
+      "javascript-basics"
+    ]
+  }
+]
