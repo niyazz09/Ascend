@@ -101,3 +101,55 @@ model Recommendation {
 
   @@index([userId])
 }
+
+model LessonCache {
+  id               String   @id @default(uuid())
+  topicId          String   @unique
+  goal             String
+  lessonVersion    Int      @default(1)
+  promptVersion    Int      @default(1)
+  retrieverVersion Int      @default(1)
+  confidenceScore  Float
+  isGrounded       Boolean  @default(true)
+  lessonContent    Json
+  sources          Json
+  videos           Json
+  metadata         Json
+  cachedAt         DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ReflectionLog {
+  id          String   @id @default(uuid())
+  userId      String
+  topicId     String
+  reflection  String
+  aiInsight   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model LearningProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  preferences Json?    // { pace: "Normal", style: "Visual" }
+  analytics   Json?    // { velocity: 2.5, quizAverage: 85, streak: 3 }
+  mastery     Json?    // { [topicId]: score }
+  career      Json?    // { goal: "Frontend Developer", weakConcepts: [] }
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model TelemetryLog {
+  id              String   @id @default(uuid())
+  action          String
+  latencyMs       Int
+  cacheHit        Boolean  @default(false)
+  provider        String
+  citationCount   Int      @default(0)
+  confidenceScore Float?
+  timestamp       DateTime @default(now())
+}
+

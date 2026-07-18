@@ -5,7 +5,7 @@ const { authenticateToken } = require('../middleware/auth');
 
 router.post('/chat', authenticateToken, async (req, res) => {
   try {
-    const { message, history, goal, completedNodes, currentNode, nextNode, difficulty } = req.body;
+    const { message, history, goal, completedNodes, currentNode, nextNode, difficulty, lessonContext, mode } = req.body;
     
     const coachResponse = await mentor({
       message,
@@ -14,7 +14,9 @@ router.post('/chat', authenticateToken, async (req, res) => {
       completedNodes,
       currentNode,
       nextNode,
-      difficulty
+      difficulty,
+      lessonContext,
+      mode
     });
 
     res.json({ response: coachResponse });

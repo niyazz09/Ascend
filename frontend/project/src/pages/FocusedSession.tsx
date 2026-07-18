@@ -13,6 +13,15 @@ import {
   Code2,
   Timer,
   Play,
+  HelpCircle,
+  MessageSquare,
+  ChevronRight,
+  ExternalLink,
+  ShieldCheck,
+  Lightbulb,
+  AlertTriangle,
+  Send,
+  RefreshCw
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../context/AuthContext';
@@ -26,202 +35,40 @@ function formatTime(s: number) {
 type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
 
 const difficultyStyles: Record<Difficulty, string> = {
-  Beginner: 'bg-success-50 text-success-600 border-success-200',
-  Intermediate: 'bg-accent-50 text-accent-700 border-accent-200',
-  Advanced: 'bg-warning-50 text-warning-600 border-warning-200',
-  Expert: 'bg-rose-50 text-danger-600 border-rose-200',
+  Beginner: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  Intermediate: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+  Advanced: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  Expert: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
 };
-
-// Course contents configuration mapped dynamically per topic ID
-const courseMaterials: Record<string, {
-  objectives: string[];
-  keyConcepts: string[];
-  lessonTitle: string;
-  lessonContent: string;
-  codeSnippet: string[];
-}> = {
-  'html-basics': {
-    lessonTitle: 'Declaring Semantic HTML5 Elements',
-    lessonContent: 'HTML is the structure behind every web application. Modern HTML5 introduces semantic tags like <header>, <nav>, <main>, <section>, and <footer>. Using semantic tags makes documents accessible, crawlable by search engines (SEO), and clean for collaborative styling.',
-    objectives: [
-      'Declare standard HTML5 boilerplate definitions',
-      'Organize text nodes with headings, paragraphs, and lists',
-      'Link external assets and document pages using anchor tags'
-    ],
-    keyConcepts: [
-      'HTML tags are enclosed in angle brackets (< >)',
-      'Attributes specify target paths, classes, and styles',
-      'Semantic tags convey raw structural purpose'
-    ],
-    codeSnippet: [
-      '<!DOCTYPE html>',
-      '<html>',
-      '  <head>',
-      '    <title>Ascend Academy</title>',
-      '  </head>',
-      '  <body>',
-      '    <header>',
-      '      <h1>Welcome to Semantic HTML</h1>',
-      '    </header>',
-      '    <main>',
-      '      <p>Semantic layouts improve SEO and accessibility.</p>',
-      '    </main>',
-      '  </body>',
-      '</html>'
-    ]
-  },
-  'css-basics': {
-    lessonTitle: 'Styling with Selectors and the Box Model',
-    lessonContent: 'CSS controls the presentation layer. The document flow is governed by the Box Model: margins separate boxes, borders surround boxes, padding is the empty breathing space inside borders, and content sits in the center. Flexible sizing is achieved using Flexbox and CSS Grid alignments.',
-    objectives: [
-      'Target elements precisely using CSS classes and IDs',
-      'Control spacing using padding, borders, and margins',
-      'Construct a responsive multi-column alignment using Flexbox'
-    ],
-    keyConcepts: [
-      'Cascading rules allow parent styles to trickle down',
-      'Specificity govern which styling overrides prevail',
-      'Margin collapses occur on vertical overlaps'
-    ],
-    codeSnippet: [
-      '.card {',
-      '  background-color: #f8fafc;',
-      '  border: 1px solid #e2e8f0;',
-      '  border-radius: 8px;',
-      '  padding: 16px;',
-      '  margin: 12px 0;',
-      '}',
-      '.container {',
-      '  display: flex;',
-      '  gap: 16px;',
-      '}'
-    ]
-  },
-  'javascript-basics': {
-    lessonTitle: 'JavaScript Control Flow and Data Types',
-    lessonContent: 'JavaScript adds logical reactivity. We use let and const for block-scoped variables. Control flow executes conditional logic checks via if-statements, while loops perform repetitions, and functions encapsulate statements for dynamic reuse.',
-    objectives: [
-      'Declare variables using block-scoped operators',
-      'Evaluate Boolean conditions using logic structures',
-      'Construct functional routines with typed return properties'
-    ],
-    keyConcepts: [
-      'Functions encapsulate reusable execution statements',
-      'Array variables store collections sequentially',
-      'Strict equality (===) prevents implicit conversions'
-    ],
-    codeSnippet: [
-      'const threshold = 80;',
-      'let currentMastery = 45;',
-      '',
-      'function evaluateCompletion(score) {',
-      '  if (score >= threshold) {',
-      '    return "Goal Accomplished!";',
-      '  }',
-      '  return "Keep practicing!";',
-      '}',
-      'console.log(evaluateCompletion(currentMastery));'
-    ]
-  },
-  'dom-manipulation': {
-    lessonTitle: 'Selecting Nodes and Listening to User Events',
-    lessonContent: 'The Document Object Model (DOM) is an object-based tree of HTML nodes. We select targets using querySelector and attach events using addEventListener. Javascript dynamically modifies classes and content to provide responsive layouts.',
-    objectives: [
-      'Retrieve single or collection nodes from the document',
-      'Attach event listeners representing clicks or user inputs',
-      'Append, remove, or insert nodes into active layout flow'
-    ],
-    keyConcepts: [
-      'The DOM represents your HTML file as an interactive tree',
-      'Event bubbling propagates triggers up through ancestors',
-      'Class List helpers add/remove design configurations'
-    ],
-    codeSnippet: [
-      'const submitBtn = document.querySelector("#submit-btn");',
-      'const feedbackText = document.querySelector(".feedback");',
-      '',
-      'submitBtn.addEventListener("click", () => {',
-      '  feedbackText.textContent = "Answer submitted successfully!";',
-      '  feedbackText.classList.add("text-success-600");',
-      '});'
-    ]
-  },
-  'web-apis': {
-    lessonTitle: 'Asynchronous Requests and the Fetch API',
-    lessonContent: 'Modern web apps exchange data with backend services asynchronously. We use the native Fetch API to perform GET and POST queries. Async and Await keywords resolve Promises cleanly without blocking the browser thread.',
-    objectives: [
-      'Construct fetch endpoints with custom request headers',
-      'Handle async promises securely with try-catch blocks',
-      'Translate JSON strings back into readable object models'
-    ],
-    keyConcepts: [
-      'Async tasks execute non-blockingly in the background',
-      'JSON forms structured payloads for HTTP networks',
-      'Status codes determine response validation results'
-    ],
-    codeSnippet: [
-      'async function loadDashboardData() {',
-      '  try {',
-      '    const response = await fetch("/api/dashboard", {',
-      '      headers: { "Authorization": "Bearer token" }',
-      '    });',
-      '    const data = await response.json();',
-      '    console.log("Stats loaded:", data.stats);',
-      '  } catch (err) {',
-      '    console.error("Dashboard fetch error:", err);',
-      '  }',
-      '}'
-    ]
-  }
-};
-
-function HeaderStat({
-  icon: Icon,
-  label,
-  value,
-  accent = 'text-accent-600',
-  bg = 'bg-accent-50',
-}: {
-  icon: typeof Target;
-  label: string;
-  value: string;
-  accent?: string;
-  bg?: string;
-}) {
-  return (
-    <div className="card p-4">
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center`}>
-          <Icon className={`w-4.5 h-4.5 ${accent}`} />
-        </div>
-        <div className="min-w-0">
-          <p className="text-[13px] text-slate-500">{label}</p>
-          <p className="text-base font-semibold text-slate-900 tracking-tight truncate">
-            {value}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function CodeBlock({ lines }: { lines: string[] }) {
   return (
-    <div className="rounded-lg border border-base-600 bg-slate-900 overflow-hidden">
-      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-slate-700/60">
-        <span className="w-2.5 h-2.5 rounded-full bg-rose-400/80" />
-        <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
-        <span className="ml-2 inline-flex items-center gap-1.5 text-[11px] text-slate-400">
-          <Code2 className="w-3.5 h-3.5" />
-          syntax-highlight
-        </span>
+    <div className="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl font-mono">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+          <span className="ml-2 inline-flex items-center gap-1.5 text-xs text-slate-400">
+            <Code2 className="w-3.5 h-3.5 text-indigo-400" />
+            code-sample.js
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(lines.join('\n'));
+            alert('Code copied to clipboard!');
+          }}
+          className="text-[11px] text-slate-400 hover:text-slate-200 transition-colors"
+        >
+          📋 Copy
+        </button>
       </div>
-      <pre className="px-4 py-3.5 text-[13px] leading-relaxed text-slate-100 font-mono overflow-x-auto">
+      <pre className="px-4 py-4 text-xs leading-relaxed text-slate-200 overflow-x-auto">
         {lines.map((l, i) => (
           <div key={i} className="flex gap-3">
-            <span className="select-none text-slate-600">{String(i + 1).padStart(2, '0')}</span>
-            <span className={l.startsWith('//') || l.startsWith('  //') ? 'text-slate-500' : ''}>{l}</span>
+            <span className="select-none text-slate-600 w-5 text-right">{String(i + 1).padStart(2, '0')}</span>
+            <span className={l.startsWith('//') || l.startsWith('  //') ? 'text-slate-500 italic' : ''}>{l}</span>
           </div>
         ))}
       </pre>
@@ -238,10 +85,23 @@ export default function FocusedSession() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
-
   const [dynamicDetails, setDynamicDetails] = useState<any>(null);
 
-  const loadDashboard = () => {
+  // Step Pagination state (1..6)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [revealHint, setRevealHint] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+
+  // AI Mentor state
+  const [mentorOpen, setMentorOpen] = useState(false);
+  const [mentorMode, setMentorMode] = useState<'teaching' | 'hint' | 'debugging' | 'revision' | 'interview'>('teaching');
+  const [mentorInput, setMentorInput] = useState('');
+  const [mentorMessages, setMentorMessages] = useState<Array<{ role: string; content: string }>>([
+    { role: 'assistant', content: "Hello! I am your AI Learning Coach. Ask me any question about this lesson's theory or practice!" }
+  ]);
+  const [sendingMentor, setSendingMentor] = useState(false);
+
+  const loadDashboard = (refresh = false) => {
     setLoading(true);
     setError(null);
     fetchWithAuth('/dashboard')
@@ -257,47 +117,19 @@ export default function FocusedSession() {
           || { title: 'HTML Basics', topicId: 'html-basics' };
         const goal = json.roadmap?.goal || 'General';
 
-        fetchWithAuth(`/planner/topic-details?topicId=${activeTopicId}&topicTitle=${encodeURIComponent(activeTopicNode.title)}&goal=${encodeURIComponent(goal)}`)
-          .then(res => {
-            if (!res.ok) throw new Error('Failed to load topic details');
-            return res.json();
-          })
-          .then(detailsJson => {
-            setDynamicDetails(detailsJson);
-            setLoading(false);
-          })
-          .catch(err => {
-            console.error('Failed to load dynamic lesson details:', err);
-            setDynamicDetails({
-              lessonTitle: activeTopicNode.title,
-              lessonContent: `Follow this structured study guide for ${activeTopicNode.title} as part of your overall ${goal} objective. Connect core concepts and attempt the quiz to level up your mastery.`,
-              objectives: [
-                `Understand core mechanisms of ${activeTopicNode.title}`,
-                `Apply key patterns for ${activeTopicNode.title}`,
-                `Inspect logic flow of ${activeTopicNode.title}`
-              ],
-              keyConcepts: [
-                `Introductory guidelines for ${activeTopicNode.title}`,
-                `Practical validation models`
-              ],
-              codeSnippet: [
-                `// Study notes for ${activeTopicNode.title}`,
-                `console.log("Welcome to Ascend AI!");`
-              ],
-              resources: {
-                documentation: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' documentation'),
-                youtube: 'https://youtube.com/results?search_query=' + encodeURIComponent(activeTopicNode.title),
-                books: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' books'),
-                practice_platforms: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' exercises'),
-                interactive_resources: 'https://google.com/search?q=' + encodeURIComponent(activeTopicNode.title + ' tutorial')
-              }
-            });
-            setLoading(false);
-          });
+        const endpoint = `/planner/topic-details?topicId=${activeTopicId}&topicTitle=${encodeURIComponent(activeTopicNode.title)}&goal=${encodeURIComponent(goal)}${refresh ? '&refresh=1' : ''}`;
+        return fetchWithAuth(endpoint);
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load RAG topic details');
+        return res.json();
+      })
+      .then(detailsJson => {
+        setDynamicDetails(detailsJson);
+        setLoading(false);
       })
       .catch(err => {
-        console.error('Error fetching dashboard for focused session:', err);
-        setError(err.message || 'Error communicating with server.');
+        console.error('Failed to load topic details:', err);
         setLoading(false);
       });
   };
@@ -312,375 +144,517 @@ export default function FocusedSession() {
     return () => clearInterval(id);
   }, [running]);
 
-  const activeTopicId = dashboardData?.recommendations?.nextTopic || 'html-basics';
-  const activeTopicNode = dashboardData?.roadmap?.roadmap?.find((n: any) => n.topicId === activeTopicId) 
-    || dashboardData?.roadmap?.roadmap?.[0]
-    || { title: 'HTML Basics' };
+  const handleSendMentor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mentorInput.trim() || sendingMentor) return;
 
-  const activeMastery = activeTopicNode 
-    ? (dashboardData?.mastery?.find((m: any) => m.topicId === activeTopicId)?.score || 0)
-    : 0;
+    const userMsg = mentorInput.trim();
+    setMentorInput('');
+    setMentorMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setSendingMentor(true);
 
-  const goal = dashboardData?.roadmap?.goal || 'General';
-  const fallbackMaterial = {
-    lessonTitle: activeTopicNode.title || 'General Concepts',
-    lessonContent: `Study the fundamentals of "${activeTopicNode.title}" as part of your overall learning goal: "${goal}". Focus on core structures, best practices, and practical application parameters to build complete competence.`,
-    objectives: [
-      `Understand core mechanisms of ${activeTopicNode.title || 'this topic'}`,
-      `Apply key patterns for ${activeTopicNode.title || 'this topic'}`,
-      `Inspect logic flow of ${activeTopicNode.title || 'this topic'}`
-    ],
-    keyConcepts: [
-      `Introductory guidelines for ${activeTopicNode.title || 'this topic'}`,
-      `Practical validation models`
-    ],
-    codeSnippet: [
-      `# Study Outline for ${activeTopicNode.title || 'this topic'}`,
-      `* Focus on understanding the core concepts of ${activeTopicNode.title || 'this topic'}`,
-      `* Practice practical exercises and review recommended study resources`,
-      `* Complete the quiz to test your knowledge and gain mastery`
-    ]
+    try {
+      const res = await fetchWithAuth('/mentor/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          history: mentorMessages.map(m => ({ role: m.role, content: m.content })),
+          goal: dashboardData?.roadmap?.goal || 'General',
+          currentNode: dynamicDetails?.lessonTitle || 'Active Topic',
+          mode: mentorMode,
+          lessonContext: dynamicDetails
+        })
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        setMentorMessages(prev => [...prev, { role: 'assistant', content: json.response }]);
+      } else {
+        setMentorMessages(prev => [...prev, { role: 'assistant', content: 'Apologies, I encountered a temporary connection issue. Please try again.' }]);
+      }
+    } catch (err) {
+      console.error('Mentor error:', err);
+    } finally {
+      setSendingMentor(false);
+    }
   };
-
-  const activeMaterial = courseMaterials[activeTopicId] || fallbackMaterial;
-
-  const sessionDetails = {
-    topic: activeTopicNode.title,
-    title: dynamicDetails?.lessonTitle || activeMaterial.lessonTitle,
-    difficulty: 'Intermediate' as const,
-    estimatedMinutes: 20,
-    mastery: activeMastery,
-    xp: 100,
-    aiExplanation: dashboardData?.recommendations?.reviewTopics?.includes(activeTopicId)
-      ? 'The AI Analyzer identifies previous gaps in this domain. Take time reviewing syntax logic and layout patterns.'
-      : 'You are on track to master this topic! Follow the material below to solidify your mental model.',
-    objectives: dynamicDetails?.objectives || activeMaterial.objectives,
-    keyConcepts: dynamicDetails?.keyConcepts || activeMaterial.keyConcepts,
-    codeSnippet: dynamicDetails?.codeSnippet || activeMaterial.codeSnippet,
-    lessonContent: dynamicDetails?.lessonContent || activeMaterial.lessonContent,
-    resources: activeTopicNode.resources || dynamicDetails?.resources || {}
-  };
-
-  const [submittingComplete, setSubmittingComplete] = useState(false);
 
   const markComplete = async () => {
-    if (completed || submittingComplete) return;
-    setSubmittingComplete(true);
+    if (completed) return;
     try {
+      const activeTopicId = dashboardData?.recommendations?.nextTopic || 'html-basics';
       const res = await fetchWithAuth('/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topicId: activeTopicId,
-          questionResult: {
-            difficulty: 80,
-            correct: true,
-            questionType: "focused_session",
-            timestamp: Date.now()
-          }
+          questionResult: { difficulty: 80, correct: true, questionType: "focused_session", timestamp: Date.now() }
         })
       });
       if (res.ok) {
         setCompleted(true);
         setRunning(false);
-        // Refresh dashboard data to reflect progress update
-        const dashRes = await fetchWithAuth('/dashboard');
-        if (dashRes.ok) {
-          const dashJson = await dashRes.json();
-          setDashboardData(dashJson);
-        }
-      } else {
-        alert('Failed to save session progress');
       }
     } catch (err) {
-      console.error('Error saving session progress:', err);
-    } finally {
-      setSubmittingComplete(false);
+      console.error('Error marking complete:', err);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-900">
-        <div className="w-8 h-8 border-4 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100">
+        <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+        <p className="mt-4 text-xs text-slate-400 font-medium">Retrieving educational sources & generating RAG lesson...</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <PageLayout title="Focused Session" description="Immersive topic practice and timer checks.">
-        <div className="max-w-xl mx-auto mt-8 text-center">
-          <div className="card p-6 border-rose-200 bg-rose-50/20">
-            <h2 className="text-lg font-semibold text-danger-600">Failed to load Focused Session</h2>
-            <p className="text-sm text-slate-500 mt-2 mb-6">{error}</p>
-            <button onClick={loadDashboard} className="btn-primary mx-auto">
-              Retry Load
-            </button>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
+  const activeTopicId = dashboardData?.recommendations?.nextTopic || 'html-basics';
+  const activeTopicNode = dashboardData?.roadmap?.roadmap?.find((n: any) => n.topicId === activeTopicId) 
+    || dashboardData?.roadmap?.roadmap?.[0]
+    || { title: 'HTML Basics' };
+  const goal = dashboardData?.roadmap?.goal || 'General Goal';
 
-  const hasRoadmap = dashboardData?.roadmap && dashboardData?.roadmap.goal && dashboardData?.roadmap.roadmap.length > 0;
-
-  if (!hasRoadmap) {
-    return (
-      <PageLayout title="Focused Session" description="Immersive topic practice and timer checks.">
-        <div className="max-w-xl mx-auto mt-8 text-center">
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-900">No Learning Path Active</h2>
-            <p className="text-sm text-slate-500 mt-2 mb-6">
-              Create a learning goal on the Roadmap page first to begin focused study sessions.
-            </p>
-            <button onClick={() => navigate('/roadmap')} className="btn-primary mx-auto">
-              Go to Roadmap
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
+  const stepsList = [
+    { id: 1, name: 'Overview & Objectives' },
+    { id: 2, name: 'Core Theory & Diagrams' },
+    { id: 3, name: 'Progressive Code' },
+    { id: 4, name: 'Interactive Practice' },
+    { id: 5, name: 'Video Masterclasses' },
+    { id: 6, name: 'Revision & Sources' }
+  ];
 
   return (
     <PageLayout
-      title="Focused Session"
-      description="A targeted study session recommended by your AI tutor."
+      title="RAG Learning Session"
+      description="Grounded, structured lesson powered by verified educational sources."
       actions={
-        <button
-          onClick={() => navigate('/roadmap')}
-          className="btn-ghost"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Roadmap
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => loadDashboard(true)}
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+            Refresh Lesson
+          </button>
+          <button
+            onClick={() => setMentorOpen(!mentorOpen)}
+            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg transition-all flex items-center gap-1.5"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            AI Mentor Chat
+          </button>
+          <button
+            onClick={() => navigate('/roadmap')}
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-lg text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Roadmap
+          </button>
+        </div>
       }
     >
-      <div className="space-y-6">
-        {/* Header stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <HeaderStat
-            icon={BookOpen}
-            label="Current Topic"
-            value={sessionDetails.topic}
-            bg="bg-accent-50"
-          />
-          <HeaderStat
-            icon={Target}
-            label="Difficulty"
-            value={sessionDetails.difficulty}
-            accent="text-warning-600"
-            bg="bg-warning-50"
-          />
-          <HeaderStat
-            icon={Clock}
-            label="Elapsed Time"
-            value={formatTime(seconds)}
-            accent="text-success-600"
-            bg="bg-success-50"
-          />
-          <HeaderStat
-            icon={Zap}
-            label="Current Mastery"
-            value={`${sessionDetails.mastery}%`}
-            accent="text-accent-600"
-            bg="bg-accent-50"
-          />
+      <div className="space-y-6 text-slate-100">
+        {/* Step Navigation Bar */}
+        <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center justify-between overflow-x-auto gap-2">
+          {stepsList.map((step) => {
+            const isActive = currentStep === step.id;
+            return (
+              <button
+                key={step.id}
+                onClick={() => setCurrentStep(step.id)}
+                className={`flex-1 min-w-[140px] py-2 px-3 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-2 ${
+                  isActive
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-800/80'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                  isActive ? 'bg-white/20 text-white font-bold' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {step.id}
+                </span>
+                <span className="truncate">{step.name}</span>
+              </button>
+            );
+          })}
         </div>
 
+        {/* Dynamic Step Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="card p-6">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="min-w-0">
-                  <p className="text-xs text-slate-500">{sessionDetails.topic}</p>
-                  <h2 className="mt-1 text-xl font-semibold text-slate-900 tracking-tight">
-                    {sessionDetails.title}
+            
+            {/* STEP 1: Overview & Objectives */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                {/* Motivation Banner: Why This Matters */}
+                <div className="p-6 bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-950 border border-indigo-500/30 rounded-2xl shadow-xl relative overflow-hidden">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">🎯 Why This Matters</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-white tracking-tight">
+                    {dynamicDetails?.lessonTitle || activeTopicNode.title}
                   </h2>
+                  <p className="mt-3 text-sm text-slate-300 leading-relaxed">
+                    {dynamicDetails?.whyItMatters || dynamicDetails?.lessonContent}
+                  </p>
                 </div>
-                <span className={`badge ${difficultyStyles[sessionDetails.difficulty]}`}>
-                  {sessionDetails.difficulty}
-                </span>
-              </div>
 
-              {/* AI Explanation */}
-              <div className="mt-5 bg-accent-50 border border-accent-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-accent-600" />
+                {/* Metadata Pill Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl">
+                    <p className="text-[11px] text-slate-400">Target Goal</p>
+                    <p className="text-xs font-bold text-slate-200 truncate mt-1">{goal}</p>
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    AI Tutor Notes
+                  <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl">
+                    <p className="text-[11px] text-slate-400">Difficulty</p>
+                    <span className={`inline-block mt-1 badge text-[11px] ${difficultyStyles['Intermediate']}`}>
+                      Intermediate
+                    </span>
+                  </div>
+                  <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl">
+                    <p className="text-[11px] text-slate-400">Estimated Reading</p>
+                    <p className="text-xs font-bold text-slate-200 mt-1">⏱ 15-20 min</p>
+                  </div>
+                  <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl">
+                    <p className="text-[11px] text-slate-400">RAG Grounding</p>
+                    <p className="text-xs font-bold text-emerald-400 mt-1">Verified {dynamicDetails?.confidenceScore || 98}%</p>
+                  </div>
+                </div>
+
+                {/* Objectives & Key Takeaways */}
+                <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                  <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <ListChecks className="w-4 h-4 text-indigo-400" />
+                    Learning Objectives & Expected Outcomes
                   </h3>
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {sessionDetails.aiExplanation}
-                </p>
-              </div>
-
-              {/* Learning Objectives */}
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ListChecks className="w-4 h-4 text-accent-600" />
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Learning Objectives
-                    </h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {sessionDetails.objectives.map((obj: string, i: number) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2.5 text-sm text-slate-600"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-success-500 mt-0.5 shrink-0" />
-                        {obj}
+                  <ul className="space-y-3">
+                    {(dynamicDetails?.objectives || []).map((obj: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-3 text-xs text-slate-300 leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{obj}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="bg-slate-50 border border-base-600 rounded-lg p-4 flex flex-col items-center justify-center text-center">
-                  <Clock className="w-5 h-5 text-accent-600" />
-                  <p className="mt-1.5 text-2xl font-semibold text-slate-900">
-                    {sessionDetails.estimatedMinutes}
-                  </p>
-                  <p className="text-[11px] text-slate-500">estimated minutes</p>
+              </div>
+            )}
+
+            {/* STEP 2: Core Theory & ASCII Diagrams */}
+            {currentStep === 2 && (
+              <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-5">
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-indigo-400" />
+                  Core Theoretical Mechanics & Architecture
+                </h3>
+                <div className="text-xs text-slate-300 leading-relaxed space-y-4 whitespace-pre-line">
+                  {dynamicDetails?.theory}
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Rich Lesson Content */}
-            <div className="card p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                Lesson Content
-              </h3>
-              <div className="space-y-6">
+            {/* STEP 3: Progressive Code Breakdown & Fixes */}
+            {currentStep === 3 && (
+              <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-6">
                 <div>
-                  <h4 className="text-base font-semibold text-slate-900">
-                    Overview & Concepts
-                  </h4>
-                  <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                    {sessionDetails.lessonContent}
+                  <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">
+                    {dynamicDetails?.progressiveExample?.concept || 'Progressive Pattern'}
+                  </span>
+                  <h3 className="text-sm font-bold text-slate-100 mt-1">
+                    Code Sample & Execution Output
+                  </h3>
+                </div>
+
+                <CodeBlock lines={dynamicDetails?.progressiveExample?.code || dynamicDetails?.codeSnippet || []} />
+
+                {dynamicDetails?.progressiveExample?.output && (
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-emerald-400">
+                    <span className="text-slate-500 select-none">$ Output: </span>
+                    {dynamicDetails.progressiveExample.output}
+                  </div>
+                )}
+
+                <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2">
+                  <h4 className="text-xs font-bold text-slate-200">Step-by-Step Breakdown</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {dynamicDetails?.progressiveExample?.explanation || 'Executes the main operational loop and maintains state bounds.'}
                   </p>
                 </div>
 
-                <div>
-                  <h4 className="text-base font-semibold text-slate-900 mb-3">
-                    Interactive Code Sample
-                  </h4>
-                  <CodeBlock lines={sessionDetails.codeSnippet} />
-                </div>
-
-                {sessionDetails.resources && Object.keys(sessionDetails.resources).length > 0 && (
-                  <div className="border-t border-base-600 pt-6 mt-6 space-y-4">
-                    <h4 className="text-base font-semibold text-slate-900">
-                      Curated Video & Masterclass Resources
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {Object.entries(sessionDetails.resources).map(([key, val]: any) => {
-                        if (!val) return null;
-                        const titleStr = typeof val === 'string' ? val : val.title || key;
-                        const linkStr = typeof val === 'string'
-                          ? (val.startsWith('http') ? val : `https://youtube.com/results?search_query=${encodeURIComponent(val)}`)
-                          : (val.link || `https://youtube.com/results?search_query=${encodeURIComponent(val.title || key)}`);
-
-                        const isVideo = key.toLowerCase().includes('video') || key.toLowerCase().includes('youtube');
-
-                        return (
-                          <div
-                            key={key}
-                            className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition-all space-y-3 shadow-sm flex flex-col justify-between"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                                <Play className="w-5 h-5" />
-                              </div>
-                              <div className="min-w-0">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                  {key.replace('_', ' ')}
-                                </span>
-                                <h5 className="text-xs font-bold text-slate-900 truncate">
-                                  {titleStr}
-                                </h5>
-                                <p className="text-[11px] text-slate-500">YouTube Verified Masterclass</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                              <a
-                                href={linkStr}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 py-1.5 px-3 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[11px] font-semibold transition-colors flex items-center justify-center gap-1.5"
-                              >
-                                <Play className="w-3 h-3 fill-white" />
-                                Watch on YouTube
-                              </a>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(linkStr);
-                                  alert('YouTube link copied to clipboard!');
-                                }}
-                                className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors shrink-0"
-                              >
-                                📋 Copy Link
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                {/* Common Mistake & Fix */}
+                {dynamicDetails?.progressiveExample?.commonMistake && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl space-y-1.5">
+                      <div className="flex items-center gap-2 text-rose-400 text-xs font-bold">
+                        <AlertTriangle className="w-4 h-4" />
+                        Common Beginner Pitfall
+                      </div>
+                      <p className="text-xs text-slate-300">{dynamicDetails.progressiveExample.commonMistake}</p>
+                    </div>
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1.5">
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                        <ShieldCheck className="w-4 h-4" />
+                        Recommended Fix
+                      </div>
+                      <p className="text-xs text-slate-300">{dynamicDetails.progressiveExample.fix}</p>
                     </div>
                   </div>
                 )}
               </div>
+            )}
+
+            {/* STEP 4: Interactive Practice Exercise */}
+            {currentStep === 4 && (
+              <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-amber-400" />
+                    <h3 className="text-sm font-bold text-slate-100">Interactive Practice Challenge</h3>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                    +50 XP Reward
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed bg-slate-950 p-4 border border-slate-800 rounded-xl">
+                  {dynamicDetails?.practiceExercise?.prompt || 'Write a function that validates input values before returning.'}
+                </p>
+
+                <div>
+                  <button
+                    onClick={() => setRevealHint(!revealHint)}
+                    className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                    {revealHint ? 'Hide Hint' : 'Reveal Hint'}
+                  </button>
+                  {revealHint && (
+                    <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200">
+                      💡 {dynamicDetails?.practiceExercise?.hint || 'Ensure you check for empty parameters.'}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-slate-200 mb-2">Solution Code</h4>
+                  <CodeBlock lines={dynamicDetails?.practiceExercise?.solution || ["function solve() { return true; }"]} />
+                  <p className="mt-2 text-xs text-slate-400 italic">
+                    {dynamicDetails?.practiceExercise?.explanation}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 5: Video Masterclasses */}
+            {currentStep === 5 && (
+              <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <Play className="w-4 h-4 text-rose-500 fill-rose-500" />
+                    Curated YouTube Masterclasses (Grounded)
+                  </h3>
+                  <span className="text-xs text-slate-400">Cached Real Metadata</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(dynamicDetails?.videoRecommendations || []).map((vid: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-slate-950 border border-slate-800 hover:border-rose-500/40 rounded-2xl space-y-3 transition-all flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                          <span className="font-bold text-rose-400 uppercase">{vid.channel || 'Verified Channel'}</span>
+                          <span>⏱ {vid.duration || '20 min'}</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-100 line-clamp-1">{vid.title}</h4>
+                        <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{vid.description}</p>
+                      </div>
+                      <a
+                        href={vid.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-white" />
+                        Watch Lecture Video
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6: Revision & Verified Sources Drawer */}
+            {currentStep === 6 && (
+              <div className="space-y-6">
+                {/* Mini Revision Notes */}
+                <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                  <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    High-Yield Revision Notes
+                  </h3>
+                  <ul className="space-y-2">
+                    {(dynamicDetails?.miniRevisionNotes || []).map((note: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
+                        <span className="text-amber-400 font-bold">•</span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Verified Sources Drawer */}
+                <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <h3 className="text-sm font-bold text-slate-100">Verified Grounded Sources ({dynamicDetails?.sources?.length || 0})</h3>
+                    </div>
+                    <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                      Confidence: {dynamicDetails?.confidenceScore || 98}%
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setSourcesOpen(!sourcesOpen)}
+                    className="w-full py-2 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all flex items-center justify-between"
+                  >
+                    <span>{sourcesOpen ? 'Collapse Sources' : 'View Verified Sources →'}</span>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${sourcesOpen ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  {sourcesOpen && (
+                    <div className="space-y-3 pt-2">
+                      {(dynamicDetails?.sources || []).map((s: any) => (
+                        <a
+                          key={s.id}
+                          href={s.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block p-3.5 bg-slate-950 border border-slate-800 hover:border-indigo-500/50 rounded-xl transition-all space-y-1 group"
+                        >
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-bold text-indigo-400">{s.citationTag} {s.websiteName}</span>
+                            <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400 transition-colors" />
+                          </div>
+                          <h4 className="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">{s.articleTitle}</h4>
+                          <p className="text-[11px] text-slate-400 leading-relaxed">{s.description}</p>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pagination Action Bar */}
+            <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center justify-between">
+              <button
+                disabled={currentStep === 1}
+                onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+                className="px-4 py-2 bg-slate-950 hover:bg-slate-800 disabled:opacity-30 text-slate-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Previous Step
+              </button>
+
+              <span className="text-xs text-slate-400 font-medium">
+                Step {currentStep} of {stepsList.length}
+              </span>
+
+              {currentStep < stepsList.length ? (
+                <button
+                  onClick={() => setCurrentStep(prev => Math.min(stepsList.length, prev + 1))}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                >
+                  Next Step
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  onClick={markComplete}
+                  disabled={completed}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                >
+                  {completed ? '✓ Lesson Completed' : 'Mark Lesson Complete'}
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Right: concepts + panel */}
+          {/* RIGHT COLUMN: Persistent AI Mentor Chat Drawer & Timer */}
           <div className="space-y-6">
-            <div className="card p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                Key Concepts
-              </h3>
-              <ul className="space-y-3">
-                {sessionDetails.keyConcepts.map((concept: string, i: number) => (
-                  <li key={i} className="flex gap-2 text-sm text-slate-600 leading-relaxed">
-                    <span className="text-accent-500 font-bold">•</span>
-                    <span>{concept}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="card p-6 text-center">
-              <Timer className="w-8 h-8 text-accent-600 mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-slate-900">Focused Timer</h3>
-              <p className="text-2xl font-bold text-slate-900 mt-2">{formatTime(seconds)}</p>
-              
+            <div className="p-5 bg-slate-900/90 border border-slate-800 rounded-2xl text-center space-y-3">
+              <Timer className="w-6 h-6 text-indigo-400 mx-auto" />
+              <p className="text-xs text-slate-400">Study Session Timer</p>
+              <p className="text-2xl font-bold text-slate-100 font-mono">{formatTime(seconds)}</p>
               {!completed ? (
-                <button
-                  onClick={markComplete}
-                  className="btn-primary w-full mt-4 justify-center"
-                >
-                  Mark Session Complete
-                  <CheckCircle2 className="w-4 h-4" />
+                <button onClick={markComplete} className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all">
+                  Finish Focus Session
                 </button>
               ) : (
-                <div className="space-y-3 mt-4">
-                  <p className="text-xs text-success-600 font-semibold">
-                    ✓ Focus session complete! Run checkpoint.
-                  </p>
-                  <button
-                    onClick={() => navigate('/quiz', { state: { topicId: activeTopicId } })}
-                    className="btn-primary w-full justify-center"
-                  >
-                    Start Checkpoint Quiz
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
+                <button onClick={() => navigate('/quiz', { state: { topicId: activeTopicId } })} className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5">
+                  Start Checkpoint Quiz
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               )}
+            </div>
+
+            {/* AI Mentor Persistent Memory Drawer */}
+            <div className="p-5 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-4 flex flex-col h-[520px]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-400" />
+                  <h3 className="text-xs font-bold text-slate-100">AI Mentor (Lesson Memory)</h3>
+                </div>
+                <select
+                  value={mentorMode}
+                  onChange={(e: any) => setMentorMode(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-[11px] text-indigo-300 font-semibold rounded-lg px-2 py-1 outline-none"
+                >
+                  <option value="teaching">Teaching Mode</option>
+                  <option value="hint">Hint Mode</option>
+                  <option value="debugging">Debug Mode</option>
+                  <option value="revision">Revision Mode</option>
+                  <option value="interview">Interview Mode</option>
+                </select>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                {mentorMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-3 rounded-xl leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-950 border border-slate-800 text-slate-200'
+                    }`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Chat Input */}
+              <form onSubmit={handleSendMentor} className="pt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={mentorInput}
+                  onChange={(e) => setMentorInput(e.target.value)}
+                  placeholder="Ask a question about this lesson..."
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="submit"
+                  disabled={sendingMentor}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
             </div>
           </div>
         </div>

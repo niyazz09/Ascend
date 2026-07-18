@@ -401,11 +401,52 @@ function SidePanel({ node, onClose, goal }: { node: any; onClose: () => void; go
           {loadingDetails ? (
             <div className="flex flex-col items-center justify-center py-6">
               <div className="w-6 h-6 border-2 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
-              <p className="text-xs text-slate-500 mt-2">Generating study notes...</p>
+              <p className="text-xs text-slate-500 mt-2">Generating theory & study notes...</p>
             </div>
           ) : (
             details && (
               <>
+                {details.theory && (
+                  <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-indigo-600" />
+                      <h3 className="text-xs font-bold text-indigo-950 uppercase tracking-wider">
+                        Core Theory & Breakdown
+                      </h3>
+                    </div>
+                    <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
+                      {details.theory}
+                    </div>
+                  </div>
+                )}
+
+                {details.videoRecommendations && details.videoRecommendations.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      🎥 Recommended Theory Video Lectures
+                    </h3>
+                    <div className="space-y-2">
+                      {details.videoRecommendations.map((vid: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-slate-900 truncate">{vid.title}</h4>
+                            <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">{vid.duration}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 leading-normal">{vid.description}</p>
+                          <a
+                            href={vid.youtubeUrl || `https://youtube.com/results?search_query=${encodeURIComponent(vid.title)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"
+                          >
+                            Watch Lecture Video →
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <ListChecks className="w-4 h-4 text-accent-600" />

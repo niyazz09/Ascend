@@ -329,6 +329,59 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Progress Reminder: Welcome Back Banner */}
+        {activeTopic && (
+          <div className="card p-6 bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white shadow-lg overflow-hidden relative border border-indigo-500/30">
+            <div className="absolute right-0 top-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div className="space-y-2.5 max-w-xl">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[11px] font-bold tracking-wider uppercase border border-indigo-400/30 flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-indigo-400" />
+                    Welcome Back!
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    Goal: {data.roadmap?.goal || 'General Path'}
+                  </span>
+                </div>
+                
+                <h2 className="text-xl font-bold text-white tracking-tight">
+                  Last Lesson: {activeTopic.title}
+                </h2>
+                
+                <div className="flex items-center gap-4 text-xs text-slate-300 flex-wrap pt-1">
+                  <div>
+                    <span className="text-slate-400">Mastery:</span> <span className="font-bold text-indigo-300">{activeMastery}%</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Weak Concepts:</span> <span className="font-bold text-amber-300">{data.recommendations?.reviewTopics?.join(', ') || 'None identified'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Est. Time to Finish:</span> <span className="font-bold text-emerald-300">{data.stats.remainingTopicsCount ? data.stats.remainingTopicsCount * 20 : 40} min</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <button
+                  onClick={() => navigate('/focused-session')}
+                  className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-2"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Continue Learning →
+                </button>
+                <button
+                  onClick={() => navigate('/quiz', { state: { topicId: activeTopic.topicId } })}
+                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                >
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  Checkpoint Quiz
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Continue Learning + Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {continueLearning && (
@@ -371,7 +424,7 @@ export default function Dashboard() {
                   onClick={() => navigate('/focused-session')}
                   className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-600 hover:text-accent-700 transition-colors"
                 >
-                  Resume
+                  Resume Theory
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -379,39 +432,82 @@ export default function Dashboard() {
           )}
 
           <div className="lg:col-span-2 card p-6">
-            <h3 className="text-[13px] font-medium text-slate-500 mb-5">
-              Upcoming Roadmap Tasks
-            </h3>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Target className="w-4 h-4 text-indigo-600" />
+                Upcoming Roadmap Tasks
+              </h3>
+              <button
+                onClick={() => navigate('/roadmap')}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+              >
+                View Full Roadmap
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
             <div className="space-y-3">
-              {upcomingTasks.map((task: any, i: number) => {
-                const Icon = taskIcon[task.type as keyof typeof taskIcon];
-                return (
-                  <div
-                    key={task.id}
-                    onClick={() => navigate(task.due === 'Next Up' ? '/focused-session' : '/roadmap')}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-base-600 hover:border-accent-200 hover:bg-white transition-colors cursor-pointer"
-                    style={{
-                      opacity: 0,
-                      animation: `fade-up 0.3s ease-out ${i * 60 + 300}ms forwards`,
-                    }}
-                  >
+              {upcomingTasks.length > 0 ? (
+                upcomingTasks.map((task: any) => {
+                  const isNext = task.status === 'next';
+                  return (
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${taskColor[task.type as keyof typeof taskColor]}`}
+                      key={task.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-300 hover:bg-white transition-all shadow-sm"
                     >
-                      <Icon className="w-4 h-4" />
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            isNext ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-slate-100 text-slate-400'
+                          }`}
+                        >
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-slate-900 truncate">
+                              {task.title}
+                            </h4>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                isNext
+                                  ? 'bg-indigo-100 text-indigo-800'
+                                  : 'bg-slate-200 text-slate-600'
+                              }`}
+                            >
+                              {task.due}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                            {task.topic}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => navigate('/focused-session')}
+                          className="py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1"
+                        >
+                          <BookOpen className="w-3 h-3 text-indigo-600" />
+                          Study Theory
+                        </button>
+                        <button
+                          onClick={() => navigate('/quiz', { state: { topicId: task.topicId } })}
+                          className="py-1.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1"
+                        >
+                          <Zap className="w-3 h-3 text-amber-500" />
+                          Quiz
+                        </button>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-medium text-slate-900 truncate">
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-slate-500">{task.topic}</p>
-                    </div>
-                    <span className="text-xs text-slate-600 bg-white border border-base-600 px-2.5 py-1 rounded-md shrink-0">
-                      {task.due}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="text-center py-6 text-xs text-slate-500">
+                  🎉 Congratulations! All tasks in your roadmap are completed!
+                </div>
+              )}
             </div>
           </div>
         </div>
